@@ -1,29 +1,55 @@
 spec_version: "1.0"
 name: "support_ticket_triage"
-description: "A real-world simulation of an Enterprise Support Triage agent handling L1 tickets and Knowledge Base retrieval."
-version: "1.0.0"
+description: "A real-world simulation of an Enterprise L1 Support Triage agent that handles incoming helpdesk tickets by querying a Knowledge Base, routing to the correct team, setting priority/status, and drafting customer resolutions."
+version: "1.1.0"
 type: "space"
 runtime: "fastapi"
 app: "server.app:app"
 port: 7860
 benchmark_id: "support_ticket_triage_v1"
 
-# Task definitions for automated grading
+# Task definitions — each maps to a concrete graded sub-task
 tasks:
   - id: "easy"
-    description: "Simple single-topic tickets requiring only basic classification (Team/Priority)."
+    description: >
+      Single-topic tickets requiring only basic classification.
+      The agent must correctly assign the team, set priority, and set status.
+      No Knowledge Base lookup required. 4 tickets (password resets, profile
+      changes, new hire access, software installs).
     difficulty: "easy"
-  - id: "medium"
-    description: "Tickets requiring a single Knowledge Base search to confirm the correct routing or status."
-    difficulty: "medium"
-  - id: "hard"
-    description: "Complex multi-issue tickets requiring several KB searches and drafting a precise response using retrieved info."
-    difficulty: "hard"
+    max_steps: 10
 
-# Environment Metadata
+  - id: "medium"
+    description: >
+      Multi-step tickets requiring one targeted Knowledge Base search to confirm
+      the correct routing, resolution procedure, or SLA policy.
+      4 tickets (refund requests, payment disputes, payroll queries, bug reports).
+    difficulty: "medium"
+    max_steps: 10
+
+  - id: "hard"
+    description: >
+      Complex, multi-issue incidents requiring several KB searches and a detailed,
+      factually grounded resolution reply. Topics include ransomware containment,
+      phishing mitigation, database crashes, latency debugging, and VPN outages.
+      6 tickets. Grader validates KB search quality via query-hint overlap.
+    difficulty: "hard"
+    max_steps: 10
+
+# Environment metadata
 metadata:
   domain: "Customer Support / Security Operations / HR"
-  complexity: "Intermediate"
-  real_world_use_case: "Automating Level 1 Support Triage for IT, Billing, Security, and HR departments."
+  complexity: "Intermediate to Advanced"
+  real_world_use_case: >
+    Automating Level-1 support triage across IT, Billing, Product, Hardware,
+    Security, and HR departments — directly applicable to enterprise helpdesk
+    automation and AI agent evaluation.
   version: "1.1.0"
   last_updated: "2026-04"
+  tags:
+    - openenv
+    - reinforcement-learning
+    - support-triage
+    - nlp
+    - enterprise
+    - security-ops

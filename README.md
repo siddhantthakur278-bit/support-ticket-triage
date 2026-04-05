@@ -97,7 +97,7 @@ flowchart TD
 3.  **Performance Audit Archive** — A professional session history logger built for auditing agent performance, tracking timestamps, task levels, and final scores.
 4.  **Semantic Search Simulation** — TF-IDF style retrieval across 27 KB articles. Agents must learn to query accurately to earn full credit.
 5.  **Smart Routing Hints** — When an agent misroutes, the system provides actionable feedback (e.g., *"Routing hint: security incident keywords detected"*).
-
+6. **Agentic Robustness Firewall** — Natively mitigates LLM hallucination inside the FastAPI application layer by aggressively intercepting and coercing invalid Pydantic JSON literals (e.g. converting `'triage'` back to `'update_ticket'`, stripping hallucinated `'unassigned'` payloads) allowing for flawless end-to-end continuous execution without crashing.
 ---
 
 ## 🦾 Action & Observation Spaces

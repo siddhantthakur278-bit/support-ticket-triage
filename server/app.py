@@ -129,7 +129,7 @@ def create_ui():
     textarea, input, select { border-radius: 6px !important; border-color: #d1d5db !important; }
     """
 
-    with gr.Blocks(theme=gr.themes.Base(primary_hue="blue", spacing_size="md"), css=css, title="Freshdesk | AI Service Desk") as demo:
+    with gr.Blocks(title="Freshdesk | AI Service Desk") as demo:
         # 1. Navbar
         with gr.Row(elem_classes="header-bar"):
             with gr.Column(scale=4):
@@ -263,7 +263,12 @@ def create_ui():
                 sys_msg: f"**Status:** {obs.system_message}",
                 total_reward: new_total,
                 history_table: new_history,
-                history_state: new_history
+                history_state: new_history,
+                team_sel: obs.ticket_team if obs.ticket_team and obs.ticket_team != "unassigned" else None,
+                prio_sel: obs.ticket_priority if obs.ticket_priority and obs.ticket_priority != "unassigned" else None,
+                stat_sel: obs.ticket_status if obs.ticket_status and obs.ticket_status != "unassigned" else "open",
+                reply_text: obs.draft_reply if obs.draft_reply else "",
+                search_query: ""
             }
 
         def on_reset(level, history, env):
@@ -339,12 +344,18 @@ def create_ui():
                         if key in action_data and "reply_text" not in action_data:
                             action_data["reply_text"] = action_data.pop(key)
                     
-                    # 2. Strict Filter: Allow ONLY valid keys
+                    # 2. Strict Filter: Allow ONLY valid keys, Drop empty strings, Drop 'unassigned'
                     allowed = {"action_type", "task_level", "search_query", "priority", "team", "status", "reply_text"}
-                    sanitized = {str(k): v for k, v in action_data.items() if k in allowed and v is not None}
+                    sanitized = {str(k): v for k, v in action_data.items() if k in allowed and v is not None and str(v).strip() != "" and str(v).lower() != "unassigned"}
                     
                     # 3. Default fixes
-                    if "action_type" not in sanitized: sanitized["action_type"] = "search_kb"
+                    if "action_type" not in sanitized: 
+                        sanitized["action_type"] = "search_kb"
+                    elif sanitized["action_type"] == "triage":
+                        sanitized["action_type"] = "update_ticket"
+                    elif sanitized["action_type"] not in ["search_kb", "update_ticket", "reply", "submit", "start_task"]:
+                        sanitized["action_type"] = "update_ticket"
+                        
                     if not sanitized.get("search_query") and sanitized["action_type"] == "search_kb":
                         sanitized["search_query"] = "support"
                     
@@ -358,6 +369,17 @@ def create_ui():
                     # Update all UI components live
                     ui_update = update_ui(obs, env, logs + [f"AI: {action_obj.action_type}"], current_total, history)
                     ui_update[reasoning_log] = thinking
+                    
+                    # Mirror the Agent's specific actions directly onto the UI inputs:
+                    if action_obj.action_type == "search_kb" and action_obj.search_query:
+                        ui_update[search_query] = action_obj.search_query
+                    if action_obj.action_type == "reply" and action_obj.reply_text:
+                        ui_update[reply_text] = action_obj.reply_text
+                    if action_obj.action_type == "update_ticket":
+                        if action_obj.team and action_obj.team != "unassigned": ui_update[team_sel] = action_obj.team
+                        if action_obj.priority and action_obj.priority != "unassigned": ui_update[prio_sel] = action_obj.priority
+                        if action_obj.status and action_obj.status != "unassigned": ui_update[stat_sel] = action_obj.status
+                        
                     yield ui_update
                     
                     current_total = ui_update[reward_disp]
@@ -369,7 +391,7 @@ def create_ui():
                     break
 
         # 5. Wire Uplinks
-        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state]
+        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query]
         
         # Add the Auto-Triage Button to the UI column (sidebar)
         with gr.Column(scale=1): 

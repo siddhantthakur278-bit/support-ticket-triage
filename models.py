@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 from openenv.core.env_server.types import Action, Observation
-from pydantic import Field
+from pydantic import Field, ConfigDict
+
 class SupportTicketTriageAction(Action):
     """Action for the Support Ticket Triage environment."""
     action_type: Literal["search_kb", "update_ticket", "reply", "submit", "start_task"] = Field(
@@ -14,6 +15,8 @@ class SupportTicketTriageAction(Action):
     team: Optional[Literal["billing", "it_support", "product", "hardware", "security", "hr"]] = Field(None, description="Only for update_ticket. Assign to a team.")
     status: Optional[Literal["open", "in_progress", "resolved", "escalated"]] = Field(None, description="Only for update_ticket. Set ticket status.")
     reply_text: Optional[str] = Field(None, description="Only for reply. The text message to the customer.")
+    
+    model_config = ConfigDict(extra="ignore")
 class SupportTicketTriageObservation(Observation):
     """Observation from the Support Ticket Triage environment."""
     current_ticket: str = Field(default="", description="The content of the current support ticket.")

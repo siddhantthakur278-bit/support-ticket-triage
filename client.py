@@ -43,6 +43,7 @@ class SupportTicketTriageEnv(
             system_message=obs_data.get("system_message", ""),
             done=obs_data.get("done", False),
             reward=obs_data.get("reward", 0.0),
+            step_count=obs_data.get("step_count", 0),
         )
         return StepResult(
             observation=observation,

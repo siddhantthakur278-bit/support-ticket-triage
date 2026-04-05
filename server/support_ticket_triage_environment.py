@@ -117,6 +117,7 @@ class SupportTicketTriageEnvironment(Environment):
                     self._ticket_team = "unassigned"
                     self._draft_reply = ""
                     self._has_searched_kb = False
+                    self._search_history = []
                     system_message = f"Started task: {self.task_level}"
                     prev_potential = self._compute_potential()
             elif action.action_type == "search_kb":
@@ -147,7 +148,9 @@ class SupportTicketTriageEnvironment(Environment):
                     if results:
                         results.sort(key=lambda x: x[0], reverse=True)
                         top_results = results[:2]
-                        self._kb_search_results = "FOUND:\\n" + "\\n".join([f"- {r[1]['title']}: {r[1]['content']}" for r in top_results])
+                        self._kb_search_results = "FOUND:\n" + "\n".join(
+                            [f"- {r[1]['title']}: {r[1]['content']}" for r in top_results]
+                        )
                         self._has_searched_kb = True
                         self._search_history.append(query)  # track query for quality grading
                         system_message = "Found knowledge base article(s)."

@@ -92,11 +92,11 @@ flowchart TD
 
 ### Key Technical Differentiators
 
-1. **Dynamic State Space** — Episodes pull from randomized JSON ticket pools (`random.choice()`), preventing agents from overfitting to specific messages.
-2. **Semantic Search Simulation** — TF-IDF style substring overlap retrieval across 27 KB articles with exact-query boosting. Agents must learn to query accurately.
-3. **Fuzzy Reply Grading** — Instead of binary pass/fail, replies earn **proportional credit** based on fraction of keywords matched (e.g., 3/5 = 0.6) plus a **length bonus** for detailed responses.
-4. **KB Search Quality Validation** — Agents receive full KB credit only if their search queries semantically overlap with the expected hint. Random/lazy searches score only 50%.
-5. **Smart Routing Hints** — When an agent routes to the wrong department, the system message provides actionable feedback (e.g., *"Routing hint: security incident keywords detected"*).
+1.  **FreshTriage Cockpit** — A high-fidelity Helpdesk interface inspired by Freshworks 'Dew', featuring a live **Reasoning Engine** that surfaces the agent’s internal thoughts in real-time.
+2.  **Explainable AI (XAI) Loop** — Our `inference.py` implements a structured JSON-based Chain-of-Thought (CoT) process. Judges can follow the agent's "thinking" as it researches tickets.
+3.  **Performance Audit Archive** — A professional session history logger built for auditing agent performance, tracking timestamps, task levels, and final scores.
+4.  **Semantic Search Simulation** — TF-IDF style retrieval across 27 KB articles. Agents must learn to query accurately to earn full credit.
+5.  **Smart Routing Hints** — When an agent misroutes, the system provides actionable feedback (e.g., *"Routing hint: security incident keywords detected"*).
 
 ---
 

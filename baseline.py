@@ -21,9 +21,9 @@ def run_eval(client, task_level):
         "3. Use update_ticket(team, priority, status) to map the ticket.\\n"
         "4. Use reply(text) to draft a response. Include the actual solution from the KB if you searched for one, or directly address their concern with relevant keywords.\\n"
         "5. Call submit() when you are completely finished.\\n"
-        "Allowed teams: billing, it_support, product, hardware.\\n"
-        "Allowed priorities: low, medium, high, critical.\\n"
-        "Allowed statuses: open, in_progress, resolved."
+        "Allowed teams: billing, it_support, product, hardware, security, hr.\\n"
+        "Allowed priorities: low, medium, high, critical, urgent.\\n"
+        "Allowed statuses: open, in_progress, resolved, escalated."
     )
     tools = [
         {
@@ -46,9 +46,9 @@ def run_eval(client, task_level):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "team": {"type": "string", "enum": ["billing", "it_support", "product", "hardware"]},
-                        "priority": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
-                        "status": {"type": "string", "enum": ["open", "in_progress", "resolved"]}
+                        "team": {"type": "string", "enum": ["billing", "it_support", "product", "hardware", "security", "hr"]},
+                        "priority": {"type": "string", "enum": ["low", "medium", "high", "critical", "urgent"]},
+                        "status": {"type": "string", "enum": ["open", "in_progress", "resolved", "escalated"]}
                     }
                 }
             }

@@ -361,6 +361,14 @@ def create_ui():
                     
                     if sanitized.get("status") == "closed":
                         sanitized["status"] = "resolved"
+                        
+                    # 4. Strict Literal Enum Enforcement
+                    if "status" in sanitized and sanitized["status"] not in {"open", "in_progress", "resolved", "escalated"}:
+                        sanitized.pop("status")
+                    if "priority" in sanitized and sanitized["priority"] not in {"low", "medium", "high", "critical", "urgent"}:
+                        sanitized.pop("priority")
+                    if "team" in sanitized and sanitized["team"] not in {"billing", "it_support", "product", "hardware", "security", "hr"}:
+                        sanitized.pop("team")
                     
                     # Yield "Thinking" state
                     yield {reasoning_log: thinking, sys_msg: f"**Status:** {thinking[:100]}..."}

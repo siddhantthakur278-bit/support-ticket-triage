@@ -385,12 +385,24 @@ def create_ui():
 
     return demo
 
-# --- Asset Route ---
+# --- Asset Route: inline SVG logo (no binary file needed in repo) ---
+from fastapi.responses import Response as FastAPIResponse
+
 @base_app.get("/logo.png")
 async def get_logo():
+    """Serve logo — try local file first, fall back to inline SVG."""
     p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.png")
-    if os.path.exists(p): return FileResponse(p)
-    return {"error": "Logo not found"}
+    if os.path.exists(p):
+        return FileResponse(p)
+    # Inline SVG fallback — no binary file required in repo
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="48" viewBox="0 0 120 48">'
+        '<rect width="120" height="48" rx="8" fill="#2cc5d2"/>'
+        '<text x="60" y="30" font-family="Inter,sans-serif" font-size="14" font-weight="700" '
+        'fill="#ffffff" text-anchor="middle" dominant-baseline="middle">FreshTriage</text>'
+        '</svg>'
+    )
+    return FastAPIResponse(content=svg, media_type="image/svg+xml")
 
 # Mount Gradio into the FastAPI app
 app = gr.mount_gradio_app(base_app, create_ui(), path="/")

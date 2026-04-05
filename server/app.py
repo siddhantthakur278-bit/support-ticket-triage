@@ -359,6 +359,9 @@ def create_ui():
                     if not sanitized.get("search_query") and sanitized["action_type"] == "search_kb":
                         sanitized["search_query"] = "support"
                     
+                    if sanitized.get("status") == "closed":
+                        sanitized["status"] = "resolved"
+                    
                     # Yield "Thinking" state
                     yield {reasoning_log: thinking, sys_msg: f"**Status:** {thinking[:100]}..."}
                     import time; time.sleep(1.0) 

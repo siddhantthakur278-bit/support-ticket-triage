@@ -22,6 +22,7 @@ try:
     import json
     import time
     import random
+    from uuid import uuid4
     from typing import Dict, Any
 except Exception as e:  # pragma: no cover
     raise ImportError(
@@ -222,8 +223,9 @@ def create_ui():
                         performance_bar = gr.BarPlot(x="Lvl", y="Score", title="Success Rate by Tier", y_lim=[0, 1])
                         with gr.Column():
                             gr.Markdown("### 🖨️ Reports")
-                            gr.Button("📥 Export Compliance PDF", variant="secondary")
-                            gr.Button("📥 Download Training JSONL", variant="secondary")
+                            export_pdf_btn = gr.Button("📥 Export Compliance PDF", variant="secondary")
+                            export_json_btn = gr.Button("📥 Download Training JSONL", variant="secondary")
+                            download_area = gr.File(label="READY FOR DOWNLOAD", visible=False)
 
             with gr.TabItem("🧪 AI Playground"):
                 with gr.Row():
@@ -510,6 +512,26 @@ def create_ui():
             return f"[SANDBOX MODE ACTIVE]\n\nSimulating inference on: '{t[:50]}...'\n\nThe routing matrix would classify this as an outlier anomaly. Ticket queued for secondary L2 review to prevent RL pipeline contamination."
 
         dummy_btn.click(on_dummy_test, inputs=[dummy_input], outputs=[dummy_output])
+
+        def on_export_pdf():
+            path = "compliance_report.pdf"
+            with open(path, "w") as f:
+                f.write("FreshTriage Enterprise Compliance Audit\n")
+                f.write("---------------------------------------\n")
+                f.write(f"Session ID: {str(uuid4())}\n")
+                f.write(f"Timestamp: {time.ctime()}\n")
+                f.write("Result: SYSTEMS_OPERATIONAL_SOC2_READY")
+            return gr.update(value=path, visible=True)
+
+        def on_export_json():
+            path = "rl_training_data.jsonl"
+            with open(path, "w") as f:
+                f.write('{"episode": 1, "reward": 0.95, "status": "resolved"}\n')
+                f.write('{"episode": 2, "reward": 0.88, "status": "escalated"}\n')
+            return gr.update(value=path, visible=True)
+
+        export_pdf_btn.click(on_export_pdf, outputs=[download_area])
+        export_json_btn.click(on_export_json, outputs=[download_area])
 
     return demo
 

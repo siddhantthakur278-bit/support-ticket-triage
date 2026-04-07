@@ -1,156 +1,124 @@
 {
-  "easy": [
-    {
-      "id": "easy-1",
-      "ticket": "Customer: Hi, I forgot my account password and cannot log in. Can you help me reset it?",
-      "expected": {
-        "team": "it_support",
-        "priority": "medium",
-        "status": "resolved"
-      }
-    },
-    {
-      "id": "easy-2",
-      "ticket": "Customer: My 2FA isn't working and I am locked out of my account. Help!",
-      "expected": {
-        "team": "it_support",
-        "priority": "high",
-        "status": "in_progress"
-      }
-    },
-    {
-      "id": "easy-3",
-      "ticket": "Customer: How do I change my profile picture?",
-      "expected": {
-        "team": "it_support",
-        "priority": "low",
-        "status": "resolved"
-      }
-    },
-    {
-      "id": "easy-4",
-      "ticket": "Customer: Hi there, I just got hired and don't know my ActiveDirectory credentials. Please help.",
-      "expected": {
-        "team": "hr",
-        "priority": "low",
-        "status": "in_progress"
-      }
-    }
-  ],
-  "medium": [
-    {
-      "id": "med-1",
-      "ticket": "Customer: I was just charged twice for my subscription this month ($20 instead of $10). This is unacceptable, I want a refund right away!",
-      "expected": {
-        "team": "billing",
-        "priority": "high",
-        "status": "resolved",
-        "reply_keywords": ["refund", "billing", "process"]
-      }
-    },
-    {
-      "id": "med-2",
-      "ticket": "Customer: I am trying to upgrade my plan to Pro, but it keeps declining my payment method, which is valid.",
-      "expected": {
-        "team": "billing",
-        "priority": "medium",
-        "status": "in_progress",
-        "reply_keywords": ["card", "payment", "bank", "try"]
-      }
-    },
-    {
-      "id": "med-3",
-      "ticket": "Customer: The new reporting feature isn't exporting my data to CSV, I need this for a presentation tomorrow.",
-      "expected": {
-        "team": "product",
-        "priority": "high",
-        "status": "in_progress",
-        "reply_keywords": ["export", "bug", "feature", "investigating"]
-      }
-    },
-    {
-      "id": "med-4",
-      "ticket": "Employee: My last paycheck was $400 short and I need to pay rent. Why did this happen?",
-      "expected": {
-        "team": "hr",
-        "priority": "high",
-        "status": "in_progress",
-        "reply_keywords": ["payroll", "processing", "deposit", "adjustment"]
-      }
-    }
-  ],
-  "hard": [
-    {
-      "id": "hard-1",
-      "ticket": "Customer: When I try to start the database server, it crashes with 'Error Code 501: Shared memory allocation failed'. I am in the middle of a critical deployment.",
-      "expected": {
-        "team": "product",
-        "priority": "critical",
-        "status": "resolved",
-        "reply_keywords": ["shmmax", "sysctl.conf", "reboot"],
-        "requires_kb": true,
-        "kb_query_hint": "501"
-      }
-    },
-    {
-      "id": "hard-2",
-      "ticket": "Customer: Our production application is throwing random 'Too many connections' exceptions and users are dropping off.",
-      "expected": {
-        "team": "product",
-        "priority": "critical",
-        "status": "resolved",
-        "reply_keywords": ["pool", "limit", "configuration", "connections"],
-        "requires_kb": true,
-        "kb_query_hint": "connections"
-      }
-    },
-    {
-      "id": "hard-3",
-      "ticket": "Customer: Half our office can't reach the internal network starting this morning. It just says TLS handshake timeout.",
-      "expected": {
-        "team": "it_support",
-        "priority": "critical",
-        "status": "in_progress",
-        "reply_keywords": ["vpn", "ssl", "certificate", "routing"],
-        "requires_kb": true,
-        "kb_query_hint": "vpn"
-      }
-    },
-    {
-      "id": "hard-4",
-      "ticket": "Admin: Multiple staff just received an email pretending to be the CEO asking for iTunes gift cards. 3 people actually clicked the link and entered their corporate passwords. Help now!!",
-      "expected": {
-        "team": "security",
-        "priority": "urgent",
-        "status": "escalated",
-        "reply_keywords": ["phishing", "domain", "firewall", "reset", "termination"],
-        "requires_kb": true,
-        "kb_query_hint": "phishing"
-      }
-    },
-    {
-      "id": "hard-5",
-      "ticket": "SysAdmin: Our file server suddenly shows all files renamed with a .locked extension and there's a ransom note dropped in every folder demanding Bitcoin. This happened overnight.",
-      "expected": {
-        "team": "security",
-        "priority": "urgent",
-        "status": "escalated",
-        "reply_keywords": ["ransomware", "isolate", "backup", "wipe", "forensics"],
-        "requires_kb": true,
-        "kb_query_hint": "ransomware"
-      }
-    },
-    {
-      "id": "hard-6",
-      "ticket": "DevOps: Since the last deploy, our checkout service p99 latency jumped from 80ms to 4 seconds intermittently. Users are abandoning cart. We see no errors in logs but traces show some downstream call is hanging.",
-      "expected": {
-        "team": "product",
-        "priority": "critical",
-        "status": "in_progress",
-        "reply_keywords": ["trace", "latency", "timeout", "pool", "service mesh"],
-        "requires_kb": true,
-        "kb_query_hint": "latency microservice"
-      }
-    }
-  ]
+    "easy": [
+        {
+            "id": "inc_e_001",
+            "ticket": "Multiple failed login attempts from a known malicious IP (192.168.1.5) on the VPN endpoint. Total of 15 attempts in 2 minutes. Need to block the IP.",
+            "expected": {
+                "team": "security",
+                "priority": "medium",
+                "status": "resolved"
+            }
+        },
+        {
+            "id": "inc_e_002",
+            "ticket": "Suspicious email reported by the CEO's assistant. Contains a 'Click here for invoice' link to a non-standard domain. Please triage.",
+            "expected": {
+                "team": "security",
+                "priority": "high",
+                "status": "open"
+            }
+        },
+        {
+            "id": "inc_e_003",
+            "ticket": "User reports their laptop (ID: HW-9021) is extremely hot and fans are at 100%. Might be a hardware failure or a crypto-mining infection. Check with hardware team.",
+            "expected": {
+                "team": "hardware",
+                "priority": "medium",
+                "status": "in_progress"
+            }
+        },
+        {
+            "id": "inc_e_004",
+            "ticket": "Password reset required for user 'jsmith' who is locked out. No security flags detected. Standard IT support ticket.",
+            "expected": {
+                "team": "it_support",
+                "priority": "low",
+                "status": "resolved"
+            }
+        }
+    ],
+    "medium": [
+        {
+            "id": "inc_m_001",
+            "ticket": "ALERT: Billing database reports an unusual spike in large refunds processed for expired accounts. Total amount: $50,000. Investigated a potential compromise in the payment gateway or an insider threat.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "insider data exfiltration",
+                "team": "billing",
+                "priority": "high",
+                "status": "open"
+            }
+        },
+        {
+            "id": "inc_m_002",
+            "ticket": "Incident: Employee reports they clicked a link in a 'Policy Update' email that asked for their corporate password. Now they can't log in. They are in the HR department. Triage and coordinate with HR.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "phishing",
+                "team": "hr",
+                "priority": "high",
+                "status": "open"
+            }
+        },
+        {
+            "id": "inc_m_003",
+            "ticket": "Log surge: Multiple 503 errors detected on the main product API. Heavy traffic incoming from a distributed range of IPs. Hardware firewalls may be saturated.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "ddos traffic mitigation",
+                "team": "hardware",
+                "priority": "urgent",
+                "status": "in_progress"
+            }
+        },
+        {
+            "id": "inc_m_004",
+            "ticket": "Security alert: Web server logs show several requests with 'SELECT * FROM users' in the query string. Please check the product codebase for vulnerabilities.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "sql injection",
+                "team": "product",
+                "priority": "medium",
+                "status": "open"
+            }
+        }
+    ],
+    "hard": [
+        {
+            "id": "inc_h_001",
+            "ticket": "CRITICAL: Node #SRV-778 is reporting a disk usage spike and files are being renamed to .crypt extension. This looks like an active ransomware attack in progress. Immediate isolation needed.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "ransomware containment",
+                "team": "it_support",
+                "priority": "critical",
+                "status": "escalated",
+                "reply_keywords": ["isolate", "node", "ad accounts", "ransomware", "containment"]
+            }
+        },
+        {
+            "id": "inc_h_002",
+            "ticket": "High-severity alert: User reports their paycheck amount was modified. Investigation shows user 'admin_kb' logged in from a VPN in a region where they aren't located and accessed payroll data. Potential insider threat.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "insider data exfiltration",
+                "team": "hr",
+                "priority": "high",
+                "status": "escalated",
+                "reply_keywords": ["suspend", "ad account", "hr", "legal", "audit", "exfiltration"]
+            }
+        },
+        {
+            "id": "inc_h_003",
+            "ticket": "Emergency: Massive inbound traffic from a known botnet is hitting the firewall. Scrubbing center is overloaded and they are reporting a potential bypass. The billing API is down and transactions are failing. Need to block high-volume CIDRs.",
+            "expected": {
+                "requires_kb": true,
+                "kb_query_hint": "ddos traffic mitigation",
+                "team": "hardware",
+                "priority": "urgent",
+                "status": "in_progress",
+                "reply_keywords": ["scrubbing center", "isp", "cidr", "ddos", "block", "firewall"]
+            }
+        }
+    ]
 }

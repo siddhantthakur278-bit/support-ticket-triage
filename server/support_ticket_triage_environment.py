@@ -8,22 +8,30 @@ try:
     from ..models import SupportTicketTriageAction, SupportTicketTriageObservation
 except ImportError:
     from models import SupportTicketTriageAction, SupportTicketTriageObservation
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(BASE_DIR, "tickets.json"), "r") as f:
     ALL_TICKETS = json.load(f)
 with open(os.path.join(BASE_DIR, "kb.json"), "r") as f:
     KB_ARTICLES = json.load(f)
+
 MAX_STEPS = 10
-STEP_PENALTY = -0.01
+
 class SupportTicketTriageEnvironment(Environment):
+    """
+    SentinelSOC: Autonomous Security Operations Center Environment.
+    An agentic environment for triage and mitigation of cyber-security incidents.
+    """
     SUPPORTS_CONCURRENT_SESSIONS: bool = True
+
     def __init__(self):
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self.reset_environment_state()
+
     def reset_environment_state(self):
         self.task_level = None
         self._current_task_data = None
-        self._current_ticket = "Welcome to Support Ticket Triage. Please send a 'start_task' action with task_level 'easy', 'medium', or 'hard'."
+        self._current_ticket = "Welcome to SentinelSOC Command Center. Awaiting mission parameters. Send 'start_mission' (start_task) with level 'easy', 'medium', or 'hard'."
         self._kb_search_results = ""
         self._ticket_status = "open"
         self._ticket_priority = "unassigned"
@@ -31,10 +39,12 @@ class SupportTicketTriageEnvironment(Environment):
         self._draft_reply = ""
         self._has_searched_kb = False
         self._search_history: list = []  # tracks all queries submitted by the agent
+
     def reset(self) -> SupportTicketTriageObservation:
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self.reset_environment_state()
-        return self._get_observation("Environment reset.")
+        return self._get_observation("SOC Terminal Initialized. Ready for intake.")
+
     def _get_observation(self, system_message: str, done: bool = False, reward: float = 0.0) -> SupportTicketTriageObservation:
         return SupportTicketTriageObservation(
             current_ticket=self._current_ticket,
@@ -48,69 +58,80 @@ class SupportTicketTriageEnvironment(Environment):
             reward=reward,
             step_count=self._state.step_count,
         )
+
     def _compute_potential(self) -> float:
         if not self.task_level or not self._current_task_data:
             return 0.01
         exp = self._current_task_data["expected"]
         score = 0.0
         part_count = 0
+        
+        # Grading based on correct team routing (incident containment unit)
         if "team" in exp:
             part_count += 1
             if self._ticket_team == exp["team"]:
                 score += 1.0
+        
+        # Grading based on severity assessment
         if "priority" in exp:
             part_count += 1
             if self._ticket_priority == exp["priority"]:
                 score += 1.0
+        
+        # Grading based on incident status lifecycle
         if "status" in exp:
             part_count += 1
             if self._ticket_status == exp["status"]:
                 score += 1.0
+        
+        # Grading based on Incident Report quality
         if "reply_keywords" in exp:
             part_count += 1
-            reply = self._draft_reply.lower()
+            report = self._draft_reply.lower()
             keywords = exp["reply_keywords"]
             if keywords and self._draft_reply.strip():
-                # Fuzzy: partial credit based on fraction of keywords matched
-                matched = sum(1 for kw in keywords if kw in reply)
+                matched = sum(1 for kw in keywords if kw in report)
                 keyword_score = matched / len(keywords)
-                # Bonus: reward longer, more detailed replies (up to 0.15 bonus)
-                length_bonus = min(len(self._draft_reply) / 800.0, 0.15)
+                # Bonus for report detail length
+                length_bonus = min(len(self._draft_reply) / 600.0, 0.1)
                 score += min(keyword_score + length_bonus, 1.0)
+                
+        # Grading based on Investigative depth (KB Intel)
         if exp.get("requires_kb"):
             part_count += 1
             if self._has_searched_kb:
-                # Base score for searching at all
                 kb_score = 0.5
-                # Bonus if any search query semantically overlaps with the expected hint
                 hint = exp.get("kb_query_hint", "")
                 if hint:
                     hint_words = set(hint.lower().split())
                     for query in self._search_history:
                         query_words = set(query.lower().split())
-                        if hint_words & query_words:  # non-empty intersection
+                        if hint_words & query_words:
                             kb_score = 1.0
                             break
                 score += kb_score
+        
         raw_score = score / part_count if part_count > 0 else 0.0
-        # Map [0, 1] to [0.01, 0.99] to be strictly within (0, 1)
         return 0.01 + 0.98 * raw_score
-    def step(self, action: SupportTicketTriageAction) -> SupportTicketTriageObservation:  # type: ignore[override]
+
+    def step(self, action: SupportTicketTriageAction) -> SupportTicketTriageObservation:
         self._state.step_count += 1
-        prev_potential = self._compute_potential()
         system_message = ""
-        reward_penalty = STEP_PENALTY
         done = False
+        
         if self._state.step_count >= MAX_STEPS:
             done = True
-            system_message = "Max steps reached. Finalizing task."
+            system_message = "MAX OPERATIONS REACHED. Finalizing incident report."
+
         if not done:
-            if action.action_type == "start_task":
-                if action.task_level not in ALL_TICKETS:
-                    system_message = "Invalid task_level. Must be easy, medium, or hard."
-                    reward_penalty -= 0.1
+            # SOC Action: Initiate Investigation / Mission
+            if action.action_type in ["start_mission", "start_task"]:
+                # support both names for compatibility
+                lvl = action.task_level or "easy"
+                if lvl not in ALL_TICKETS:
+                    system_message = "ERROR: Invalid Mission Level."
                 else:
-                    self.task_level = action.task_level
+                    self.task_level = lvl
                     self._current_task_data = random.choice(ALL_TICKETS[self.task_level])
                     self._current_ticket = self._current_task_data["ticket"]
                     self._kb_search_results = ""
@@ -120,119 +141,96 @@ class SupportTicketTriageEnvironment(Environment):
                     self._draft_reply = ""
                     self._has_searched_kb = False
                     self._search_history = []
-                    system_message = f"Started task: {self.task_level}"
-                    prev_potential = self._compute_potential()
-            elif action.action_type == "search_kb":
+                    system_message = f"ACTIVE ALERT: {self.task_level.upper()} LEVEL THREAT INITIALIZED."
+
+            # SOC Action: Investigate Intelligence / Logs
+            elif action.action_type in ["investigate", "search_kb"]:
                 if not self.task_level:
-                    system_message = "Must start task first."
-                    reward_penalty -= 0.1
+                    system_message = "ERROR: Command Bridge not ready. Start mission first."
                 else:
-                    # High-precision search logic
-                    query = action.search_query.lower()
-                    stop_words = {"how", "do", "i", "my", "is", "a", "the", "to", "can", "help", "please", "me", "what", "with", "for", "am", "are"}
-                    q_words = [w.strip("?!.,").lower() for w in query.split() if w.strip("?!.,").lower() not in stop_words]
+                    query = action.search_query.lower() if action.search_query else ""
+                    stop_words = {"how", "do", "i", "the", "to", "at", "on", "was"}
+                    q_words = [w.strip("?!.,").lower() for w in query.split() if w.lower() not in stop_words]
                     
                     if not q_words:
-                        q_words = [w.lower() for w in query.split()]
+                        q_words = [query]
 
                     results = []
                     for article in KB_ARTICLES:
                         score = 0
                         text = (article["title"] + " " + article["content"] + " " + " ".join(article["tags"])).lower()
-                        if query in text:
-                            score += 5  # High boost for exact query substring
+                        if query in text: score += 5
                         for word in q_words:
-                            if word in text:
-                                score += 2  # Boost for exact word match
+                            if word in text: score += 2
                         if score > 0:
                             results.append((score, article))
                     
                     if results:
                         results.sort(key=lambda x: x[0], reverse=True)
-                        top_results = results[:2]
-                        self._kb_search_results = "FOUND:\n" + "\n".join(
-                            [f"- {r[1]['title']}: {r[1]['content']}" for r in top_results]
+                        top = results[:2]
+                        self._kb_search_results = "INTEL RETRIEVED:\n" + "\n".join(
+                            [f"[{r[1]['title']}]: {r[1]['content']}" for r in top]
                         )
                         self._has_searched_kb = True
-                        self._search_history.append(query)  # track query for quality grading
-                        system_message = "Found knowledge base article(s)."
+                        self._search_history.append(query)
+                        system_message = "Threat intelligence retrieved successfully."
                     else:
-                        self._kb_search_results = f"No results for '{query}'"
-                        system_message = "No relevant articles found."
-                        reward_penalty -= 0.05
-            elif action.action_type == "update_ticket":
+                        self._kb_search_results = f"No threat patterns found for '{query}'"
+                        system_message = "Zero matches found in Intelligence Database."
+
+            # SOC Action: Mitigate and Route
+            elif action.action_type in ["mitigate", "update_ticket"]:
                 if not self.task_level:
-                    system_message = "Must start task first."
-                    reward_penalty -= 0.1
+                    system_message = "ERROR: Command Bridge not ready."
                 else:
                     updates = []
                     if action.priority:
                         self._ticket_priority = action.priority
-                        updates.append(f"priority={action.priority}")
+                        updates.append(f"severity={action.priority}")
                     if action.team:
                         self._ticket_team = action.team
-                        updates.append(f"team={action.team}")
-                        # Provide routing quality hint for helpful RL signal
-                        ticket_lower = self._current_ticket.lower()
-                        billing_kw = any(k in ticket_lower for k in ["refund", "charge", "billing", "payment", "invoice"])
-                        security_kw = any(k in ticket_lower for k in ["phishing", "ransomware", "breach", "firewall"])
-                        hr_kw = any(k in ticket_lower for k in ["payroll", "paycheck", "hire", "onboarding", "activedirectory"])
-                        if billing_kw and action.team != "billing":
-                            system_message = f"Routing hint: billing-related keywords detected."
-                        elif security_kw and action.team != "security":
-                            system_message = f"Routing hint: security incident keywords detected."
-                        elif hr_kw and action.team not in ["hr", "it_support"]:
-                            system_message = f"Routing hint: HR-related keywords detected."
+                        updates.append(f"deployment_unit={action.team}")
                     if action.status:
                         self._ticket_status = action.status
-                        updates.append(f"status={action.status}")
+                        updates.append(f"incident_status={action.status}")
+                    
                     if updates:
-                        if not system_message:
-                            system_message = f"Ticket updated: {', '.join(updates)}"
+                        system_message = f"SITUATION REPORT: {', '.join(updates)}"
                     else:
-                        system_message = "No fields provided to update."
-                        reward_penalty -= 0.05
-            elif action.action_type == "reply":
+                        system_message = "No mitigation parameters provided."
+
+            # SOC Action: Incident Report Drafting
+            elif action.action_type in ["report", "reply"]:
                 if not self.task_level:
-                    system_message = "Must start task first."
-                    reward_penalty -= 0.1
+                    system_message = "ERROR: Command Bridge not ready."
                 elif not action.reply_text:
-                    system_message = "reply_text is required for reply action."
-                    reward_penalty -= 0.1
+                    system_message = "REPORT FAILURE: Report content cannot be empty."
                 else:
                     self._draft_reply = action.reply_text
-                    system_message = "Draft reply updated."
+                    system_message = "Incident Report Draft synchronized."
+
+            # SOC Action: Submit and Close
             elif action.action_type == "submit":
                 if not self.task_level:
-                    system_message = "Must start task first."
-                    reward_penalty -= 0.1
+                    system_message = "ERROR: Command Bridge not ready."
                 else:
                     done = True
-                    score = self._compute_potential()
-                    # Strictly between 0 and 1 (0.01 to 0.99)
-                    score = min(max(score, 0.01), 0.99)
-                    system_message = f"Task submitted. Final score: {score:.2f}/1.00"
+            
             else:
-                system_message = f"Unknown action type: {action.action_type}"
-                reward_penalty -= 0.1
+                system_message = f"UNRECOGNIZED COMMAND: {action.action_type}"
+
         current_score = self._compute_potential()
-        
-        # Grader Logic: Ensure each step reward is strictly > 0 and cumulative score is in (0, 1)
-        # Each intermediate step gives a tiny positive reward, final step bridges to the actual score
         step_epsilon = 0.005
         if done:
-            # For the final step, we return whatever is needed to make the cumulative reward equal the score
-            # (clamped between 0.01 and 0.99 to be safe)
             cumulative_before = (self._state.step_count - 1) * step_epsilon
             reward = max(current_score - cumulative_before, step_epsilon)
-            
-            # Authoritative score for logging
             final_total = cumulative_before + reward
             system_message = f"Task submitted. Final score: {final_total:.2f}/1.00"
         else:
             reward = step_epsilon
 
         return self._get_observation(system_message, done=done, reward=reward)
+
     @property
     def state(self) -> State:
         return self._state

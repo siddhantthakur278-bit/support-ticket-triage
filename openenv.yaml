@@ -1,55 +1,49 @@
 spec_version: "1.0"
-name: "support_ticket_triage"
-description: "A real-world simulation of an Enterprise L1 Support Triage agent that handles incoming helpdesk tickets by querying a Knowledge Base, routing to the correct team, setting priority/status, and drafting customer resolutions."
-version: "1.1.0"
+name: "sentinel_soc"
+description: "SentinelSOC: Autonomous Cyber-Defense Command Center. An agentic environment challenging AI analysts to triage, investigate, and mitigate high-stakes cyber security incidents (Ransomware, DDoS, Phishing) using real-world threat intelligence playbooks."
+version: "2.0.0"
 type: "space"
 runtime: "fastapi"
 app: "server.app:app"
 port: 7860
-benchmark_id: "support_ticket_triage_v1"
+benchmark_id: "sentinel_soc_v1"
 
-# Task definitions — each maps to a concrete graded sub-task
+# Terminal Operations Definitions
 tasks:
   - id: "easy"
     description: >
-      Single-topic tickets requiring only basic classification.
-      The agent must correctly assign the team, set priority, and set status.
-      No Knowledge Base lookup required. 4 tickets (password resets, profile
-      changes, new hire access, software installs).
+      Level-1 Alerts: Single-vector incidents (Failed logins, suspicious emails) requiring 
+      standard triage and routing to the Security Response team.
     difficulty: "easy"
     max_steps: 10
 
   - id: "medium"
     description: >
-      Multi-step tickets requiring one targeted Knowledge Base search to confirm
-      the correct routing, resolution procedure, or SLA policy.
-      4 tickets (refund requests, payment disputes, payroll queries, bug reports).
+      Level-2 Alerts: Multi-step investigations requiring Threat Intel (KB) retrieval
+      to identify specific attack patterns like SQL Injection probes or massive traffic spikes.
     difficulty: "medium"
     max_steps: 10
 
   - id: "hard"
     description: >
-      Complex, multi-issue incidents requiring several KB searches and a detailed,
-      factually grounded resolution reply. Topics include ransomware containment,
-      phishing mitigation, database crashes, latency debugging, and VPN outages.
-      6 tickets. Grader validates KB search quality via query-hint overlap.
+      Critical Incidents: High-severity threats (Ransomware, Data Exfiltration, Bypassed Firewalls)
+      requiring multiple intelligence searches and detailed containment reports.
+      Grader validates playbook adherence and report quality.
     difficulty: "hard"
     max_steps: 10
 
-# Environment metadata
+# Deployment Metadata
 metadata:
-  domain: "Customer Support / Security Operations / HR"
-  complexity: "Intermediate to Advanced"
+  domain: "Cybersecurity / Security Operations Center (SOC)"
+  complexity: "Advanced Autonomous Agent Task"
   real_world_use_case: >
-    Automating Level-1 support triage across IT, Billing, Product, Hardware,
-    Security, and HR departments — directly applicable to enterprise helpdesk
-    automation and AI agent evaluation.
-  version: "1.1.0"
+    Autonomous L1 SOC triage and incident mitigation for enterprise cyber-defenses.
+  version: "2.0.0"
   last_updated: "2026-04"
   tags:
     - openenv
     - reinforcement-learning
-    - support-triage
-    - nlp
-    - enterprise
-    - security-ops
+    - cybersecurity
+    - agentic-ai
+    - soc-analyst
+    - enterprise-defense

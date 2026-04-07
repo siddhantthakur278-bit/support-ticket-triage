@@ -231,27 +231,57 @@ def create_ui():
                     )
                     data = json.loads(res.choices[0].message.content)
                     action_data = data.get("action", data)
-                    
-                    # Normalization
+
+                    # --- ATOM-LEVEL SANITIZATION ---
+                    # 1. Action Type Alignment
                     at = str(action_data.get("action_type", "investigate")).lower()
-                    if "search" in at or "investig" in at: at = "investigate"
-                    elif "updat" in at or "mitigat" in at or "rout" in at: at = "mitigate"
-                    elif "report" in at or "repl" in at: at = "report"
-                    else: at = "submit"
+                    if "search" in at or "invest" in at or "kb" in at: at = "investigate"
+                    elif "mitig" in at or "updat" in at or "rout" in at: at = "mitigate"
+                    elif "repor" in at or "repl" in at: at = "report"
+                    elif "subm" in at or "close" in at: at = "submit"
+                    else: at = "investigate"
+
+                    # 2. Team Alignment
+                    unit = str(action_data.get("team", "security")).lower()
+                    if unit not in ["security", "it_support", "billing", "product", "hardware", "hr"]:
+                        if "sec" in unit: unit = "security"
+                        elif "it" in unit or "supp" in unit: unit = "it_support"
+                        elif "bill" in unit or "pay" in unit: unit = "billing"
+                        elif "prod" in unit: unit = "product"
+                        elif "hard" in unit: unit = "hardware"
+                        elif "hr" in unit or "payroll" in unit: unit = "hr"
+                        else: unit = "security"
+
+                    # 3. Priority/Severity Alignment
+                    sev = str(action_data.get("priority", "medium")).lower()
+                    if sev not in ["low", "medium", "high", "critical", "urgent"]:
+                        if "low" in sev: sev = "low"
+                        elif "crit" in sev or "urg" in sev: sev = "critical"
+                        elif "high" in sev: sev = "high"
+                        else: sev = "medium"
+
+                    # 4. Status Lifecycle Alignment (The fix for your error)
+                    stat = str(action_data.get("status", "open")).lower()
+                    if stat not in ["open", "in_progress", "resolved", "escalated"]:
+                        if "open" in stat: stat = "open"
+                        elif "prog" in stat: stat = "in_progress"
+                        elif "res" in stat or "done" in stat or "close" in stat: stat = "resolved"
+                        elif "esc" in stat: stat = "escalated"
+                        else: stat = "open"
 
                     sanitized = {
                         "action_type": at,
-                        "search_query": action_data.get("search_query", "threat pattern"),
-                        "reply_text": action_data.get("reply_text", ""),
-                        "team": action_data.get("team", "security"),
-                        "priority": action_data.get("priority", "medium"),
-                        "status": action_data.get("status", "open")
+                        "search_query": str(action_data.get("search_query", "threat patterns")),
+                        "reply_text": str(action_data.get("reply_text", action_data.get("report", ""))),
+                        "team": unit,
+                        "priority": sev,
+                        "status": stat
                     }
                     
                     action_obj = SupportTicketTriageAction(**sanitized)
                     obs = env.step(action_obj)
                     ui_update = update_ui(obs, env, [], current_total, history)
-                    ui_update[reasoning_log] = data.get("thinking", "Neutralizing threats...")
+                    ui_update[reasoning_log] = data.get("thinking", "Neutralizing threat vectors...")
                     yield ui_update
                     current_total = ui_update[reward_disp]
                     if obs.done: break

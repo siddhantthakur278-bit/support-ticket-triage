@@ -36,37 +36,40 @@ def create_ui():
     env = SupportTicketTriageEnvironment()
     
     css = """
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
     :root {
         --primary: #00e5ff;
         --secondary: #6366f1;
-        --card-bg: rgba(13, 20, 33, 0.75);
-        --border: rgba(255, 255, 255, 0.08);
+        --card-bg: rgba(10, 18, 30, 0.85);
+        --border: rgba(255, 255, 255, 0.1);
         --text: #ffffff;
-        --acc-red: #ff2d55;
+        --acc-red: #ff3b30;
         --acc-green: #34c759;
-        --acc-blue: #00e5ff;
-        --glass-shimmer: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+        --acc-blue: #007aff;
+        --glass-shimmer: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
     }
     body, .gradio-container { 
-        background-color: #0b111a !important;
+        background-color: #05080c !important;
         background-image: 
-            radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 100% 100%, rgba(0, 229, 255, 0.1) 0%, transparent 50%) !important;
+            radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.2) 0%, transparent 40%),
+            radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.15) 0%, transparent 40%) !important;
         font-family: 'Inter', sans-serif !important; 
         color: var(--text) !important; 
+        overflow-x: hidden;
     }
-    .main-card { background: var(--card-bg) !important; backdrop-filter: blur(20px); border: 1px solid var(--border) !important; border-radius: 20px !important; padding: 24px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); margin-bottom: 20px; transition: transform 0.3s; }
-    .main-card:hover { border: 1px solid var(--primary); }
-    .sidebar-card { background: var(--card-bg) !important; border: 1px solid var(--border) !important; border-radius: 20px !important; padding: 16px; margin-bottom: 20px; height: 100%; }
-    .header-bar { background: rgba(11, 17, 26, 0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid var(--border) !important; padding: 16px 32px !important; margin-bottom: 30px !important; }
-    .neon-text { text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); }
-    .status-warning { color: var(--acc-red) !important; font-weight: bold; animation: heartbeat 1.5s infinite; }
-    @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .hint-box { border: 1px dashed var(--primary); padding: 8px; border-radius: 8px; background: rgba(0, 229, 255, 0.05); margin-top: 10px; font-size: 0.85rem; }
-    button.primary { background: linear-gradient(135deg, var(--secondary), var(--primary)) !important; border: none !important; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
-    button.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5); }
+    .main-card { background: var(--card-bg) !important; backdrop-filter: blur(25px); border: 1px solid var(--border) !important; border-radius: 24px !important; padding: 28px; box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6); margin-bottom: 24px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .main-card:hover { border: 1px solid var(--primary); transform: translateY(-4px); box-shadow: 0 15px 45px 0 rgba(0, 229, 255, 0.1); }
+    .sidebar-card { background: var(--card-bg) !important; border: 1px solid var(--border) !important; border-radius: 24px !important; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .header-bar { background: rgba(5, 8, 12, 0.95) !important; backdrop-filter: blur(15px); border-bottom: 1px solid var(--border) !important; padding: 18px 40px !important; margin-bottom: 35px !important; }
+    .mono-log { font-family: 'JetBrains Mono', monospace !important; font-size: 0.85rem !important; line-height: 1.6 !important; background: rgba(0,0,0,0.3) !important; border-radius: 12px !important; }
+    .neon-text { text-shadow: 0 0 15px var(--primary); font-weight: 800; }
+    .status-warning { color: var(--acc-red) !important; font-weight: 800; font-family: 'Inter'; animation: heartbeat 1.5s infinite; text-shadow: 0 0 10px rgba(255, 59, 48, 0.4); }
+    @keyframes heartbeat { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hint-box { border: 1px dashed var(--primary); padding: 12px; border-radius: 14px; background: rgba(0, 229, 255, 0.04); margin-top: 15px; }
+    .kb-module { background: rgba(255,255,255,0.03) !important; border-radius: 16px; padding: 15px; font-size: 0.9rem; line-height: 1.5; color: #cbd5e1; }
+    button.primary { background: linear-gradient(135deg, var(--secondary), var(--primary)) !important; border: none !important; border-radius: 12px !important; font-weight: 700 !important; transition: all 0.3s; }
+    button.primary:hover { filter: brightness(1.1); transform: scale(1.02); }
     """
 
     with gr.Blocks(title="FreshTriage | Enterprise AI Triage", css=css) as demo:
@@ -138,7 +141,7 @@ def create_ui():
 
                         with gr.Column(elem_classes="main-card"):
                             gr.Markdown("### 🛰️ Environmental Trace")
-                            trace_output = gr.Code(label="EVENT_LOG", language="json", interactive=False, lines=5)
+                            trace_output = gr.Code(label="EVENT_LOG", language="json", interactive=False, lines=5, elem_classes="mono-log")
 
                     # Column 3: AI Observer 
                     with gr.Column(scale=1):
@@ -148,7 +151,7 @@ def create_ui():
                             with gr.Row():
                                 ai_latency = gr.Label(value="N/A", label="LATENCY")
                                 ai_tokens = gr.Label(value="N/A", label="TOKENS")
-                            reasoning_log = gr.Textbox(label="REASONING PATH", interactive=False, lines=3)
+                            reasoning_log = gr.Textbox(label="REASONING PATH", interactive=False, lines=3, elem_classes="mono-log")
                             policy_plot = gr.BarPlot(x="Action", y="Confidence", title="Neuro-Link Policy Distribution", height=200)
                         
                         with gr.Column(elem_classes="sidebar-card"):

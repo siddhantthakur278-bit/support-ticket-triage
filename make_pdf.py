@@ -25,7 +25,7 @@ def create_pdf():
         "This project is 'Support Ticket Triage', an advanced reinforcement learning (RL) "
         "environment built on top of the Meta PyTorch OpenEnv framework. It simulates a "
         "Helpdesk or IT Level-1 Support workflow where an AI agent must autonomously "
-        "interact with incoming customer complaints, search a corporate Knowledge Base (KB), "
+        "The interface used by external evaluators. It translates JSON requests into SentinelAction objects, "
         "assign appropriate routing parameters (like 'priority' and 'team'), and correctly "
         "draft resolution messages."
     )
@@ -52,7 +52,7 @@ def create_pdf():
     pdf.chapter_title('4. Codebase Architecture (What each file means)')
     body_text = (
         "1. models.py:\n"
-        "Defines strict Pydantic schemas (SupportTicketTriageAction, SupportTicketTriageObservation). "
+        "Defines strict Pydantic schemas (SentinelAction, SentinelObservation). "
         "This provides the strict 'contract' dictating exactly what inputs the agent receives and exactly "
         "what actions (search_kb, update_ticket, reply) it is allowed to take via the OpenEnv API.\n\n"
         "2. server/sentinel_env.py:\n"

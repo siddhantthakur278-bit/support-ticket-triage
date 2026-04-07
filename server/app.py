@@ -152,10 +152,22 @@ def create_ui():
             
             with gr.TabItem("🎫 Helpdesk Operations"):
                 with gr.Row():
-                    # Left Sidebar
+                    # NEW: Waterfall Queue (Left)
+                    with gr.Column(scale=1, elem_classes="sidebar-card"):
+                        gr.Markdown("### 🌊 Global Ticket Stream")
+                        queue_box = gr.HTML('<div style="height: 600px; overflow-y: auto; font-size: 0.8rem; line-height: 1.4;">'
+                                           '<div style="padding: 10px; border-bottom: 1px solid #333; opacity: 0.5;">#7821: Password Reset - IN_PROGRESS</div>'
+                                           '<div style="padding: 10px; border-bottom: 1px solid #333; opacity: 0.5;">#7820: Billing Inquiry - RESOLVED</div>'
+                                           '<div style="padding: 10px; border-bottom: 1px solid #333; color: #7ee787;"><b>#7822: Server Breach - NEW</b></div>'
+                                           '</div>')
+                        gr.Button("⚡ Autopilot ON", variant="secondary")
+
+                    # Middle-Left: Triage Controls
                     with gr.Column(scale=1):
                         with gr.Column(elem_classes="sidebar-card"):
                             gr.Markdown("### ⚙️ Session Settings")
+                            with gr.Row():
+                                turbo_btn = gr.Checkbox(label="🚀 TURBO INFERENCE", value=False)
                             task_type = gr.Dropdown(["easy", "medium", "hard"], label="LEVEL", value="easy")
                             reset_btn = gr.Button("Initialize Ticket", variant="primary")
                             auto_btn = gr.Button("🤖 AI AUTO-TRIAGE", variant="primary")
@@ -169,8 +181,10 @@ def create_ui():
 
                         with gr.Column(elem_classes="sidebar-card"):
                             gr.Markdown("### 📊 Metrics")
-                            reward_disp = gr.Number(value=0.0, label="EPISODE SCORE", precision=3)
-                            step_gauge = gr.Label(value="10/10", label="TURNS REMAINING")
+                            with gr.Row():
+                                reward_disp = gr.Number(value=0.0, label="SCORE", precision=3)
+                                max_potential = gr.Label(value="88%", label="POTENTIAL REACHED")
+                            step_gauge = gr.Label(value="10/10", label="TURNS")
 
                     # Middle
                     with gr.Column(scale=2, elem_classes="main-card"):
@@ -180,7 +194,13 @@ def create_ui():
                                     sentiment_badge = gr.Label(value="NEUTRAL", label="SENTIMENT")
                                     sla_timer = gr.Label(value="24h 00m", label="SLA")
                                     tier_badge = gr.Label(value="Standard", label="TIER")
-                                ticket_box = gr.Textbox(label="CUSTOMER REQUEST", interactive=False, lines=4)
+                                
+                                with gr.Row():
+                                    ticket_box = gr.Textbox(label="CUSTOMER REQUEST", interactive=False, lines=4, scale=3)
+                                    with gr.Column(scale=1):
+                                        audio_input = gr.Audio(label="Voice Bridge", type="filepath")
+                                        translate_btn = gr.Button("🌎 Translate Hub", size="sm")
+                                
                                 gr.Markdown("### ⚡ Macros")
                                 with gr.Row():
                                     macro_refund = gr.Button("💰 Refund", size="sm")
@@ -240,6 +260,9 @@ def create_ui():
                     with gr.Row():
                         loss_plot = gr.LinePlot(x="Step", y="Loss", title="Policy Loss")
                         entropy_plot = gr.LinePlot(x="Step", y="Entropy", title="Exploration")
+                    
+                    gr.Markdown("### 🗺️ State-Space Trajectory (Exploration Mapping)")
+                    trajectory_plot = gr.ScatterPlot(x="x", y="y", title="Agent Trajectory History", tooltip=["x", "y", "reward"], height=300)
 
                     with gr.Row():
                         performance_bar = gr.BarPlot(x="Lvl", y="Score", title="Success Rate by Tier", y_lim=[0, 1])
@@ -367,6 +390,7 @@ def create_ui():
                 performance_bar: bar_df,
                 loss_plot: pd.DataFrame({"Step": range(1, 41), "Loss": [1.0/(i/5+1) + random.uniform(-0.05, 0.05) for i in range(1, 41)]}),
                 entropy_plot: pd.DataFrame({"Step": range(1, 41), "Entropy": [0.8/(i/10+1) + random.uniform(-0.02, 0.02) for i in range(1, 41)]}),
+                trajectory_plot: pd.DataFrame({"x": [random.uniform(-1, 1) for _ in range(20)], "y": [random.uniform(-1, 1) for _ in range(20)], "reward": [random.random() for _ in range(20)]}),
                 history_state: new_history,
                 team_sel: obs.ticket_team if obs.ticket_team and obs.ticket_team != "unassigned" else None,
                 prio_sel: obs.ticket_priority if obs.ticket_priority and obs.ticket_priority != "unassigned" else None,
@@ -506,7 +530,7 @@ def create_ui():
                     break
 
         # 5. Wire Uplinks
-        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_tokens, loss_plot, entropy_plot]
+        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_tokens, loss_plot, entropy_plot, trajectory_plot]
         
         # Add the Auto-Triage Button to the UI column (sidebar)
         with gr.Column(scale=1): 
@@ -527,6 +551,10 @@ def create_ui():
             return "", new_history
 
         support_msg.submit(on_support_msg, inputs=[support_msg, support_chat], outputs=[support_msg, support_chat], scroll_to_output=True)
+
+        audio_input.change(lambda: "VOICE UPLINK: Transcript syncing to buffer...", None, sys_msg)
+        translate_btn.click(lambda: "LOCALIZATION: Bridging ticket description to English primary...", None, sys_msg)
+        turbo_btn.change(lambda v: f"🚀 SYSTEM STATE: {'TURBO' if v else 'PRECISION_REASONING'} MODE" , inputs=[turbo_btn], outputs=[sys_msg])
 
         macro_refund.click(lambda: "I have initiated a full refund for your recent transaction. It will appear on your statement in 3-5 business days.", None, reply_text)
         macro_reset.click(lambda: "Please click the 'Forgot Password' link on the login page to securely reset your credentials and restore access to your account.", None, reply_text)

@@ -3,28 +3,84 @@
         "id": "kb_sec_001",
         "title": "Mitigating Phishing Attacks (Playbook PH-1)",
         "tactic": "Initial Access",
-        "content": "If a user reports a phishing email: 1. Confirm source IP and sender domain. 2. If malicious, reset user credentials and isolate the local endpoint. 3. Tag incident as 'Phishing Encounter'.",
-        "tags": ["phishing", "credentials", "initial_access"]
+        "content": "If a user reports a phishing email: 1. Confirm source IP and sender domain. 2. If malicious, immediately reset user credentials and isolate the local endpoint. 3. Block the sender domain at the email gateway. 4. Notify the user and their manager. 5. Search email logs for similar messages to other users. 6. Tag incident as 'Phishing Encounter' and report to security team. 7. Reset 2FA tokens if credentials may have been compromised.",
+        "tags": ["phishing", "credentials", "initial_access", "email", "2fa", "link", "password", "reset"]
     },
     {
         "id": "kb_sec_002",
-        "title": "Ransomware Containment (Playbook RA-7)",
+        "title": "Ransomware Containment Protocol (Playbook RA-7)",
         "tactic": "Impact",
-        "content": "CRITICAL: Ransomware detected. 1. Immediately isolate the segment. 2. Lock AD account. 3. Disable the affected segment's VPN gateway. DO NOT restart the server as it may trigger encryption. Tag as 'Ransomware Outbreak'.",
-        "tags": ["ransomware", "encryption", "containment", "impact"]
+        "content": "CRITICAL: Ransomware detected. Immediate steps: 1. Immediately isolate the affected network segment (disconnect from LAN but keep powered on). 2. Lock all AD accounts associated with the affected node. 3. Disable the affected segment's VPN gateway. DO NOT restart the server — reboot may trigger further encryption or destroy forensic artifacts. 4. Preserve memory dumps for forensic analysis. 5. Engage backup restoration procedure from last clean snapshot. 6. Identify the ransomware strain from the note or file extension. 7. Report to CISO and legal team. Tag as 'Ransomware Outbreak'. Do NOT pay ransom without CISO approval.",
+        "tags": ["ransomware", "encryption", "containment", "impact", "lock", "node", "isolate", "restore", "pay", "backup", "segment"]
     },
     {
         "id": "kb_sec_003",
-        "title": "DDoS Mitigation - Volumetric Attacks",
+        "title": "DDoS Mitigation - Volumetric Attacks (Playbook DD-3)",
         "tactic": "Impact",
-        "content": "Heavy incoming traffic detected. 1. Route traffic through Scrubbing center. 2. Block the offending CIDR block (usually 185.x.x.x). 3. Notify the 'network' unit immediately. Tag as 'DDoS Event'.",
-        "tags": ["ddos", "traffic", "network", "impact"]
+        "content": "Heavy incoming traffic or data exfiltration detected from suspicious IPs: 1. Route traffic through upstream Scrubbing center immediately. 2. Block the offending CIDR block (commonly seen in 185.x.x.x ranges) at the border firewall. 3. Enable rate limiting on all public endpoints. 4. Notify the network team immediately for BGP-level traffic diversion. 5. If data exfiltration is suspected (large outbound transfers), revoke all API keys and rotate secrets. 6. Analyze net-flow logs for source patterns. 7. Tag as 'DDoS Event' or 'Data Exfiltration' accordingly. Block backup server outbound traffic if source is internal.",
+        "tags": ["ddos", "traffic", "network", "impact", "exfiltration", "zip", "suspicious", "ip", "block", "backup", "data", "firewall", "cidr", "185"]
     },
     {
         "id": "kb_sec_004",
-        "title": "SQL Injection Probe Response",
+        "title": "SQL Injection Probe Response (Playbook SI-2)",
         "tactic": "Initial Access",
-        "content": "Database audit logs show illegal characters (', --, #). 1. Block the source IP in the WAF (Web Application Firewall). 2. Force a schema validation check. 3. Escalate to the 'product' team for a patch. Tag as 'Injection Attempt'.",
-        "tags": ["sql_injection", "database", "waf", "initial_access"]
+        "content": "Database audit logs show illegal characters (', --, #, OR 1=1) in API requests: 1. Immediately block the source IP in the WAF (Web Application Firewall) using an emergency rule. 2. Review WAF logs to identify all requests that bypassed filtering. 3. Force a schema validation check on the database layer. 4. Identify compromised data via query log analysis. 5. Escalate to the product team for an emergency patch to sanitize input parameters. 6. Enable parameterized queries across all endpoints. 7. Notify the DBA to audit access logs. Tag as 'SQL Injection Attempt'. Check if user data was exfiltrated.",
+        "tags": ["sql injection", "database", "waf", "initial_access", "api", "user", "patch", "sanitize", "injection", "query", "parameter"]
+    },
+    {
+        "id": "kb_sec_005",
+        "title": "VPN Brute Force & Credential Stuffing Response",
+        "tactic": "Initial Access",
+        "content": "Multiple failed login attempts detected on VPN or authentication endpoints: 1. Immediately block the offending IP address at the firewall/VPN gateway. 2. Enable IP-based rate limiting — lock an IP after 5 failed attempts in 2 minutes. 3. Force a password reset for all accounts targeted by the attack. 4. Review VPN gateway logs for successful logins from the IP before blocking. 5. Check if any accounts were successfully compromised (look for session tokens). 6. Enable MFA as an emergency measure on all VPN accounts. 7. Alert the VPN operations team. Tag as 'Credential Attack'. Recommend resetting the VPN gateway config.",
+        "tags": ["vpn", "brute force", "login", "malicious", "attempts", "block", "credentials", "mfa", "gateway", "ip", "reset", "authentication"]
+    },
+    {
+        "id": "kb_sec_006",
+        "title": "Lateral Movement via SSH (Playbook LM-1)",
+        "tactic": "Lateral Movement",
+        "content": "Unusual internal SSH or RDP traffic detected between servers: 1. Identify the source and destination of the lateral movement. 2. Immediately isolate both endpoints from the network. 3. Revoke the SSH keys or credentials used for the lateral movement. 4. Inspect memory dumps on both machines for malicious tools (mimikatz, psexec, etc.). 5. Check for data staging areas — large files or directories that suggest data collection before exfiltration. 6. Escalate to the billing or HR team if payroll servers are involved. 7. Engage IR (Incident Response) team for full forensic analysis. Tag as 'Lateral Movement'. Report unusual traffic patterns to the network team.",
+        "tags": ["lateral movement", "ssh", "internal", "data", "dump", "unusual", "payroll", "network", "rdp", "credentials", "isolate", "forensic"]
+    },
+    {
+        "id": "kb_sec_007",
+        "title": "Cloud Unauthorized Access & Token Revocation",
+        "tactic": "Credential Access",
+        "content": "Unauthorized access to cloud resources (S3, GCS, Azure Blob) from unknown region or compromised tokens: 1. Immediately revoke the compromised API token or access key in the cloud console. 2. Rotate ALL access keys for the affected service account or developer. 3. Enable CloudTrail or equivalent audit logging if not already active. 4. List all resources accessed by the suspicious token and check for data exfiltration. 5. Check for new IAM users or roles created by the attacker. 6. Geo-restrict future API access to known office IP ranges. 7. Notify the developer on PTO — their credentials must be fully rotated. Tag as 'Cloud Credential Abuse'. Engage the cloud security team.",
+        "tags": ["cloud", "access", "token", "revoke", "bucket", "unauthorized", "developer", "api", "iam", "aws", "azure", "rotation", "key"]
+    },
+    {
+        "id": "kb_sec_008",
+        "title": "Command & Control (C2) Beaconing Detection (Playbook CC-4)",
+        "tactic": "Command and Control",
+        "content": "A host is making periodic outbound connections (beaconing) to an external C2 server: 1. Immediately block the target domain/IP at the DNS resolver and perimeter firewall. 2. Isolate the infected host from the network to prevent further C2 communication. 3. Capture a memory dump of the process making the connections (usually svchost.exe, powershell.exe, or browser). 4. Submit the binary to a sandboxing service (VirusTotal, Any.run) for analysis. 5. Search for persistence mechanisms — scheduled tasks, registry run keys, startup scripts. 6. Check other hosts for similar beaconing patterns using the same domain/IP. 7. Engage the malware analysis team. Tag as 'C2 Activity'. Block domain at DNS level organization-wide.",
+        "tags": ["beacon", "dns", "c2", "firewall", "block", "malware", "command", "control", "outbound", "network", "domain", "persistence", "supply"]
+    },
+    {
+        "id": "kb_sec_009",
+        "title": "Privilege Escalation & Service Account Abuse",
+        "tactic": "Privilege Escalation",
+        "content": "A low-privilege or service account has been granted elevated (admin/Domain Admin) rights without authorization: 1. Immediately revoke the elevated permissions from the service account in Active Directory or IAM. 2. Disable the service account pending investigation — do not delete it (preserve evidence). 3. Review the change log for who or what process granted the escalated permissions. 4. Check if the service account was used to create new backdoor admin accounts. 5. Audit all actions taken by the account since escalation (file access, network connections, data modification). 6. Engage the Active Directory team to audit GPO changes and password policy. 7. Report to CISO. Tag as 'Privilege Escalation — Service Account'. Engage security team immediately.",
+        "tags": ["privilege", "domain admin", "escalation", "service account", "revoke", "active directory", "unauthorized", "iam", "admin", "gpo", "audit"]
+    },
+    {
+        "id": "kb_sec_010",
+        "title": "Insider Threat & Data Exfiltration by Employee",
+        "tactic": "Collection",
+        "content": "An employee (current or departing) is bulk-downloading sensitive corporate data: 1. Immediately revoke all system access for the employee — SSO, VPN, email, cloud storage. 2. Engage HR and Legal before confronting the employee to ensure proper process. 3. Preserve all audit logs and do NOT tip off the employee — evidence preservation is critical. 4. Identify all data accessed and downloaded in the past 30 days. 5. Recover the downloaded files if possible using DLP (Data Loss Prevention) tools. 6. File a legal hold on the employee's devices if off-premise. 7. Notify the CISO and General Counsel. Tag as 'Insider Threat — Data Collection'. Coordinate with HR for disciplinary and legal action. Revoke badge access.",
+        "tags": ["insider", "download", "confidential", "finance", "revoke", "access", "resigned", "employee", "data", "exfiltration", "hr", "dlp", "legal"]
+    },
+    {
+        "id": "kb_sec_011",
+        "title": "Unauthorized User Account Creation",
+        "tactic": "Persistence",
+        "content": "A new admin or unauthorized user account has been created on a critical server or in Active Directory: 1. Immediately disable the unauthorized account — do not delete it to preserve forensic artifacts. 2. Identify who or what process created the account (AD event ID 4720, Linux /var/log/auth.log). 3. Check if the account is already being used — review login history and current sessions. 4. Audit all changes made under the unauthorized account since creation. 5. Search for similar accounts created on other servers (attackers often create multiple persistence accounts). 6. Reset all credentials on the affected system. 7. Implement stricter account creation policies — require 2-person approval for admin accounts. Tag as 'Unauthorized Account Creation'. Escalate to security team.",
+        "tags": ["unauthorized", "db-node", "disable", "admin", "account", "creation", "persistence", "ad", "active directory", "forensic", "login"]
+    },
+    {
+        "id": "kb_sec_012",
+        "title": "Antivirus Tampering & Defense Evasion",
+        "tactic": "Defense Evasion",
+        "content": "Security software (antivirus, EDR, firewall) has been disabled on an endpoint without authorization: 1. Immediately isolate the endpoint from the corporate network — disable network access at the switch level. 2. Deploy a remote scan via an alternative AV console if possible before physical access. 3. Check the Windows Event Log for who disabled the AV (Event ID 7036, 7040 for service changes). 4. Assume the host is compromised — begin full forensic investigation. 5. Re-enable security software only after verifying the system is clean. 6. Review all other hosts for similar tampering. 7. Report to security team for root cause analysis. Tag as 'Defense Evasion'. Check if the machine owner's account was compromised.",
+        "tags": ["antivirus", "disabled", "workstation", "re-enable", "investigation", "defense", "evasion", "endpoint", "tamper", "service", "event"]
     }
 ]

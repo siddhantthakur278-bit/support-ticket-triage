@@ -216,18 +216,25 @@ def create_ui():
             # ─── TAB 3: Leaderboard ───────────────────────────────────────────
             with gr.TabItem("🏆 Sovereign Leaderboard", id="leaderboard"):
                 with gr.Column(elem_classes="main-card"):
-                    gr.Markdown("## 👑 Global Autonomous RL Rankings")
-                    gr.Dataframe(
-                        value=[
-                            [1, "SENTINEL_AI (YOU)", 0.998, "0.18s"],
-                            [2, "AlphaSec Deepmind", 0.992, "0.45s"],
-                            [3, "OpenAIOps Genesis", 0.988, "1.10s"],
-                            [4, "Anthropic Sentinel", 0.985, "1.52s"],
-                            [5, "Llama-Cyber-Defense", 0.941, "0.78s"],
-                        ],
-                        headers=["Rank", "Agent_ID", "Mean_Efficiency", "Latency"],
-                        interactive=False
+                    gr.Markdown("## 👑 Session Performance Rankings")
+                    gr.Markdown("*Live mission scores. Click Refresh after completing missions.*")
+                    with gr.Row():
+                        leaderboard_table = gr.Dataframe(
+                            headers=["Rank", "Mission", "DEFCON", "Score", "Grade"],
+                            interactive=False, label="🎖️ Mission Leaderboard"
+                        )
+                        leaderboard_chart = gr.BarPlot(
+                            x="Mission", y="Score", title="Mission Scores",
+                            height=260,
+                            value=pd.DataFrame({"Mission": ["—"], "Score": [0.01]})
+                        )
+                    gr.Markdown("### 📊 DEFCON Performance Matrix")
+                    defcon_stats = gr.Dataframe(
+                        headers=["DEFCON Level", "Missions Run", "Best", "Avg", "Worst"],
+                        interactive=False, label="Per-Difficulty Analytics"
                     )
+                    refresh_lb_btn = gr.Button("🔄 Refresh Rankings", variant="primary")
+                    lb_msg = gr.Markdown("*Run missions in the Tactical Bridge tab, then click Refresh.*")
 
         # === STATE ===
         total_reward = gr.State(0.0)
@@ -664,10 +671,58 @@ def create_ui():
         )
 
         # =================================================================
+        # DYNAMIC LEADERBOARD
+        # =================================================================
+        def _grade(score: float) -> str:
+            if score >= 0.90: return "★★★ S"
+            if score >= 0.75: return "★★☆ A"
+            if score >= 0.55: return "★☆☆ B"
+            if score >= 0.35: return "☆☆☆ C"
+            return "💀 D"
+
+        def build_leaderboard(history):
+            if not history:
+                empty_lb = pd.DataFrame({"Rank": [], "Mission": [], "DEFCON": [], "Score": [], "Grade": []})
+                empty_chart = pd.DataFrame({"Mission": ["—"], "Score": [0.01]})
+                empty_stats = pd.DataFrame({"DEFCON Level": [], "Missions Run": [], "Best": [], "Avg": [], "Worst": []})
+                return empty_lb, empty_chart, empty_stats, "*No missions completed yet. Run a mission first.*"
+            sorted_h = sorted(history, key=lambda r: float(r[2]), reverse=True)
+            lb_rows = [[i+1, r[0], r[1], round(float(r[2]), 4), _grade(float(r[2]))] for i, r in enumerate(sorted_h)]
+            lb_df = pd.DataFrame(lb_rows, columns=["Rank", "Mission", "DEFCON", "Score", "Grade"])
+            chart_df = pd.DataFrame({"Mission": [r[0] for r in history], "Score": [round(float(r[2]), 4) for r in history]})
+            defcon_map = {}
+            for row in history:
+                lvl = str(row[1]).upper()
+                defcon_map.setdefault(lvl, []).append(float(row[2]))
+            stats_rows = []
+            for lvl in ["EASY", "MEDIUM", "HARD"]:
+                if lvl in defcon_map:
+                    sc = defcon_map[lvl]
+                    stats_rows.append([lvl, len(sc), round(max(sc), 4), round(sum(sc)/len(sc), 4), round(min(sc), 4)])
+            stats_df = pd.DataFrame(
+                stats_rows if stats_rows else [],
+                columns=["DEFCON Level", "Missions Run", "Best", "Avg", "Worst"]
+            )
+            top = sorted_h[0]
+            msg = f"✅ **{len(history)} missions completed.** Best: **{round(float(top[2]), 4)}** — {_grade(float(top[2]))}"
+            return lb_df, chart_df, stats_df, msg
+
+        refresh_lb_btn.click(
+            build_leaderboard,
+            inputs=[history_state],
+            outputs=[leaderboard_table, leaderboard_chart, defcon_stats, lb_msg]
+        )
+
+        # =================================================================
         # INITIAL LOAD
         # =================================================================
         def on_init():
-            return build_ui_dict(_mock_obs("Sovereign AI Defense Grid ONLINE. Initialize a mission."), None, 0.0, [])
+            api_key = os.getenv("HF_TOKEN", "").strip()
+            if not api_key:
+                status = "⚠️ **HF_TOKEN not set** — AUTO-MITIGATION requires an API key in Space Secrets."
+            else:
+                status = "🛡️ **Sovereign AI Defense Grid ONLINE.** Initialize a mission to begin."
+            return build_ui_dict(_mock_obs(status), None, 0.0, [])
 
         demo.load(on_init, outputs=ALL_OUT)
 

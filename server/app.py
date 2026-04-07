@@ -670,8 +670,8 @@ def create_ui():
         
         time_scrub.change(on_scrub, inputs=[time_scrub], outputs=[sys_msg])
 
-    # Trigger initial load to populate analytics
-    demo.load(on_init, outputs=ALL_OUTPUTS)
+        # Trigger initial load to populate analytics
+        demo.load(on_init, outputs=ALL_OUTPUTS)
     return demo
 
 # --- Asset Route: inline SVG logo (no binary file needed in repo) ---

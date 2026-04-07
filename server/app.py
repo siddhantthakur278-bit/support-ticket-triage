@@ -1,5 +1,5 @@
 """
-SentinelSOC | Autonomous Cyber-Defense Command Center.
+FreshTriage AI | Autonomous Support Operations Center.
 Premium Uplink: Meta PyTorch Hackathon v2.0
 """
 try:
@@ -28,7 +28,7 @@ base_app = create_app(
     SentinelSOCEnvironment,
     SentinelAction,
     SentinelObservation,
-    env_name="sentinel_soc",
+    env_name="fresh_triage",
     max_concurrent_envs=10,
 )
 
@@ -68,11 +68,11 @@ def create_ui():
     button.primary { background: linear-gradient(135deg, var(--primary), var(--secondary)) !important; border: none !important; border-radius: 8px !important; color: white !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 2px; }
     """
 
-    with gr.Blocks(title="SentinelSOC | Autonomous Strategic Defense", css=css) as demo:
+    with gr.Blocks(title="FreshTriage AI | Autonomous Support Triage", css=css) as demo:
         # 1. Deck Header
         with gr.Row(elem_classes="header-bar"):
             with gr.Column(scale=2):
-                gr.HTML('<div style="display: flex; align-items: center; gap: 20px;"><img src="/logo.png" style="height: 50px; filter: drop-shadow(0 0 10px var(--primary));"><div><h1 style="margin: 0; font-size: 2rem;">SENTINEL<span style="color: #ff004c;">SOC</span> <span style="font-size: 0.7rem; background: #ff004c; color: white; padding: 2px 8px; border-radius: 2px; vertical-align: middle;">UPLINK PRO v2.0</span></h1><p style="margin: 0; color: #00ff9d; font-size: 0.7rem; letter-spacing: 2px;">● SOVEREIGN AI DEFENSE ACTIVE</p></div></div>')
+                gr.HTML('<div style="display: flex; align-items: center; gap: 20px;"><img src="/logo.png" style="height: 50px; filter: drop-shadow(0 0 10px var(--primary));"><div><h1 style="margin: 0; font-size: 2rem;">FRESH<span style="color: #ff004c;">TRIAGE</span> <span style="font-size: 0.7rem; background: #ff004c; color: white; padding: 2px 8px; border-radius: 2px; vertical-align: middle;">AI CORE v2.0</span></h1><p style="margin: 0; color: #00ff9d; font-size: 0.7rem; letter-spacing: 2px;">● AUTONOMOUS SUPPORT ACTIVE</p></div></div>')
             with gr.Column(scale=1):
                 gr.HTML('<div style="text-align: right; font-family: \'JetBrains Mono\'; font-size: 0.75rem; opacity: 0.8;">ENCRYPTION: QUANTUM-LATTICE<br>GEO-SYNC: SEA-GATE-01<br>STATUS: <span style="color: #ff375f; animation: pulse 1s infinite;">DEFCON-2</span></div>')
 
@@ -90,7 +90,7 @@ def create_ui():
                         
                         gr.Markdown("---")
                         gr.Markdown("### 🛠️ Deploy Params")
-                        agent_proto = gr.Dropdown(["Spectral v4.1 (SOC)", "Guardian v2.0 (Compliance)", "Ghost v1.0 (Stealth)"], label="AGENT_PROTOCOL", value="Spectral v4.1 (SOC)")
+                        agent_proto = gr.Dropdown(["Standard Triage", "Deep Investigation", "Rapid Response"], label="AGENT_PROTOCOL", value="Standard Triage")
                         task_type = gr.Dropdown(["easy", "medium", "hard"], label="DEFCON_LEVEL", value="easy")
                         hint_input = gr.Textbox(label="OVERSEER_GUIDANCE", placeholder="Provide tactical context...", lines=1)
                         reset_btn = gr.Button("INITIALIZE UPLINK", variant="primary")
@@ -126,9 +126,9 @@ def create_ui():
 
                             gr.Markdown("### 📍 Response Matrix")
                             with gr.Row():
-                                team_sel = gr.Dropdown(["security", "it_support", "billing", "product", "hardware", "hr", "network"], label="DEPLOYMENT_UNIT")
-                                prio_sel = gr.Dropdown(["low", "medium", "high", "critical", "urgent"], label="SEVERITY_LEVEL")
-                                stat_sel = gr.Dropdown(["open", "in_progress", "resolved", "escalated"], label="INCIDENT_STATUS")
+                                team_sel = gr.Dropdown(["unassigned", "security", "it_support", "billing", "product", "hardware", "hr", "network"], label="DEPLOYMENT_UNIT", value="unassigned")
+                                prio_sel = gr.Dropdown(["unassigned", "low", "medium", "high", "critical", "urgent"], label="SEVERITY_LEVEL", value="unassigned")
+                                stat_sel = gr.Dropdown(["open", "in_progress", "resolved", "escalated"], label="INCIDENT_STATUS", value="open")
                             triage_btn = gr.Button("EXECUTE POLICY UPDATE", variant="secondary")
 
                         with gr.Column(elem_classes="main-card"):
@@ -169,18 +169,18 @@ def create_ui():
 
             with gr.TabItem("🏆 Sovereign Leaderboard", id="leaderboard"):
                 with gr.Column(elem_classes="main-card"):
-                    gr.Markdown("## 👑 Global Autonomous RL Rankings")
+                    gr.Markdown("## 👑 Global Support Triage Rankings")
                     gr.Dataframe(value=[
-                        [1, "**SENTINEL_AI (YOU)**", 0.998, "0.18s"],
+                        [1, "**FRESH_TRIAGE_AI (YOU)**", 0.998, "0.18s"],
                         [2, "AlphaSec Deepmind", 0.992, "0.45s"],
                         [3, "OpenAIOps Genesis", 0.988, "1.10s"],
                         [4, "Anthropic Sentinel", 0.985, "1.52s"],
                         [5, "Llama-Cyber-Defense", 0.941, "0.78s"]
                     ], headers=["Rank", "Agent_ID", "Mean_Efficiency", "Latency"], interactive=False)
 
-        # 3. State Mangement
+        # 3. State Management
         total_reward = gr.State(0.0)
-        history_state = gr.State(value=[["08:00", "EASY", 0.94], ["08:15", "MEDIUM", 0.88]])
+        history_state = gr.State(value=[])
         env_state = gr.State(None)
 
         # 4. Mission Logic
@@ -199,16 +199,16 @@ def create_ui():
             model = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
             
             # --- FEATURE: MULTI-AGENT PROTOCOLS ---
-            persona = "lethal-grade autonomous SOC agent"
-            directive = "Prioritize neutralizing threats with maximum speed and tactical precision."
-            if "Guardian" in agent_proto:
-                persona = "compliance-focused security auditor"
-                directive = "Prioritize system stability and meticulous evidence documentation."
-            elif "Ghost" in agent_proto:
-                persona = "stealth containment specialist"
-                directive = "Isolate segments silently without alerting the adversary."
+            persona = "highly efficient support triage agent"
+            directive = "Prioritize accurate routing and helpful resolution summaries."
+            if "Deep" in agent_proto:
+                persona = "thorough root-cause investigator"
+                directive = "Prioritize identifying underlying issues and detailed documentation."
+            elif "Rapid" in agent_proto:
+                persona = "speed-optimized quick response unit"
+                directive = "Neutralize tickets as fast as possible with minimal overhead."
 
-            yield {sys_msg: f"📡 **UPLINK: Sentinel Protocol '{agent_proto}' Synchronized.**"}
+            yield {sys_msg: f"📡 **UPLINK: FreshTriage AI Protocol '{agent_proto}' Synchronized.**"}
             
             for _ in range(8):
                 state = env._get_observation("Analyzing Tactical Vector...")
@@ -222,7 +222,9 @@ def create_ui():
                         messages=[
                             {"role": "system", "content": f"You are SentinelAI, a {persona}. {directive}\n"
                                                           f"Output ONLY a flat JSON object with: 'thinking' and 'action' (action_type, search_query, team, priority, status, reply_text).\n"
-                                                          f"KEYS: action_type (investigate, mitigate, report, submit), team (security, it_support, product, billing, hardware, hr, network).\n"
+                                                          f"VALID TEAMS: security, it_support, product, billing, hardware, hr, network.\n"
+                                                          f"VALID PRIORITIES: low, medium, high, critical, urgent.\n"
+                                                          f"VALID STATUS: open, in_progress, resolved, escalated.\n"
                                                           f"MANDATORY: No markdown.{hint_prompt}"},
                             {"role": "user", "content": f"TACTICAL_ALERT: {json.dumps(state.__dict__)}"}
                         ],
@@ -310,8 +312,8 @@ def create_ui():
                 tactic_label: tactic,
                 suggestion_box: "AUTONOMOUS THREAT ANALYSIS...",
                 reasoning_log: "Neural cores synced...",
-                team_sel: obs.ticket_team if obs.ticket_team != "unassigned" else None,
-                prio_sel: obs.ticket_priority if obs.ticket_priority != "unassigned" else None,
+                team_sel: obs.ticket_team,
+                prio_sel: obs.ticket_priority,
                 stat_sel: obs.ticket_status,
                 reply_text: obs.draft_reply,
                 artifact_box: getattr(env, '_current_task_data', {}).get('artifact', 'Evaluating Artifacts...'),
@@ -339,8 +341,7 @@ def create_ui():
         translate_btn.click(lambda: {sys_msg: "📡 **UPLINK:** Decrypting biometric stream... [NO MALICIOUS INTENT DETECTED]"}, outputs=[sys_msg])
         
         def on_init():
-            initial_history = [["08:00", "EASY", 0.94], ["08:15", "MEDIUM", 0.82], ["08:45", "HARD", 0.76]]
-            return update_ui(None, None, 0.0, initial_history)
+            return update_ui(None, None, 0.0, [])
 
         demo.load(on_init, outputs=ALL_OUT)
         

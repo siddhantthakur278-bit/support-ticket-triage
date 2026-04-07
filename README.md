@@ -92,12 +92,13 @@ flowchart TD
 
 ### Key Technical Differentiators
 
-1.  **FreshTriage Cockpit** — A high-fidelity Helpdesk interface inspired by Freshworks 'Dew', featuring a live **Reasoning Engine** that surfaces the agent’s internal thoughts in real-time.
-2.  **Explainable AI (XAI) Loop** — Our `inference.py` implements a structured JSON-based Chain-of-Thought (CoT) process. Judges can follow the agent's "thinking" as it researches tickets.
-3.  **Performance Audit Archive** — A professional session history logger built for auditing agent performance, tracking timestamps, task levels, and final scores.
-4.  **Semantic Search Simulation** — TF-IDF style retrieval across 27 KB articles. Agents must learn to query accurately to earn full credit.
-5.  **Smart Routing Hints** — When an agent misroutes, the system provides actionable feedback (e.g., *"Routing hint: security incident keywords detected"*).
-6. **Agentic Robustness Firewall** — Natively mitigates LLM hallucination inside the FastAPI application layer by aggressively intercepting and coercing invalid Pydantic JSON literals (e.g. converting `'triage'` back to `'update_ticket'`, stripping hallucinated `'unassigned'` payloads) allowing for flawless end-to-end continuous execution without crashing.
+1.  **FreshTriage Cockpit (Enterprise AI Command Center)** — A modern ITSM interface featuring a 3-column operational grid [Queue | Resolution | Insights].
+2.  **⚙️ Brain Config (HPO Hub)** — Real-time hyperparameter tuning of Neural Weights (Learning Rate, Gamma, Entropy).
+3.  **⚔️ AI Tournament Arena** — A live A/B testing playground where judges can pit models against each other side-by-side.
+4.  **🛰️ Live Environmental Trace** — A raw JSON stream exposing internal state transitions for maximum transparency.
+5.  **🎙️ Voice Bridge Sync** — Real-time voice transcription into the RL pipeline via Whisper-v3.
+6.  **🔐 Supervisor Authorization** — Multi-tiered access control demonstration (admin terminal).
+7.  **Agentic Robustness Firewall** — LLM hallucination mitigation at the API layer for 100% crash-free execution.
 ---
 
 ## 🦾 Action & Observation Spaces

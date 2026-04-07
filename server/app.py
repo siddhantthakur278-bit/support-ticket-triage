@@ -167,7 +167,7 @@ def create_ui():
                     trajectory_plot = gr.ScatterPlot(x="x", y="y", title="Policy Trajectory Map", height=300)
                     
                     with gr.Row():
-                        performance_bar = gr.BarPlot(x="Lvl", y="Score", title="Mean Accuracy by Difficulty", aggregate="mean")
+                        performance_bar = gr.BarPlot(x="Lvl", y="Score", title="Mean Accuracy by Difficulty")
                         with gr.Column():
                             gr.Markdown("### 🗄️ Compliance Export")
                             with gr.Div(elem_classes="export-grid"):
@@ -241,7 +241,10 @@ def create_ui():
             if new_history:
                 rev = new_history[::-1]
                 plot_df = pd.DataFrame({"Run": [str(i) for i in range(len(rev))], "Score": [r[2] for r in rev]})
-                bar_df = pd.DataFrame({"Lvl": [r[1] for r in new_history], "Score": [r[2] for r in new_history]})
+                
+                # Pre-aggregate for the BarPlot to support all Gradio versions
+                raw_bar_df = pd.DataFrame({"Lvl": [r[1] for r in new_history], "Score": [r[2] for r in new_history]})
+                bar_df = raw_bar_df.groupby("Lvl")["Score"].mean().reset_index()
             else:
                 plot_df = pd.DataFrame(columns=["Run", "Score"])
                 bar_df = pd.DataFrame(columns=["Lvl", "Score"])

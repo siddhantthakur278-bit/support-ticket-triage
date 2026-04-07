@@ -263,11 +263,22 @@ def create_ui():
             res = update_ui(obs, env, [], 0.0, history); res[env_state] = env; return res
 
         def on_auto_triage(logs, current_total, history, env):
-            if env is None: yield {sys_msg: "Init first."}; return
+            if env is None: 
+                ui_err = update_ui(None, None, [], current_total, history)
+                ui_err[sys_msg] = "⚠️ Please initialize the Neural Bridge first."
+                yield ui_err
+                return
             from openai import OpenAI
             client = OpenAI(base_url=os.getenv("API_BASE_URL", "https://api.groq.com/openai/v1"), api_key=os.getenv("HF_TOKEN"))
             model = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
-            yield {sys_msg: "🤖 AI Agent taking control...", reasoning_log: "Initializing agentic chain..."}
+            
+            # Use update_ui to get a full template of 26 keys
+            initial_obs = env._get_observation("AI Waking...")
+            ui_state = update_ui(initial_obs, env, [], current_total, history)
+            ui_state[sys_msg] = "🤖 AI Agent taking control..."
+            ui_state[reasoning_log] = "Initializing agentic chain..."
+            yield ui_state
+            
             for _ in range(8):
                 state = env._get_observation("Thinking...")
                 try:
@@ -287,7 +298,11 @@ def create_ui():
                     yield ui_update
                     current_total = ui_update[reward_disp]
                     if obs.done: break
-                except: break
+                except Exception as e:
+                    ui_err = update_ui(state, env, [], current_total, history)
+                    ui_err[sys_msg] = f"❌ AI ERROR: {str(e)}"
+                    yield ui_err
+                    break
 
         def on_search(query, logs, total, history, env):
             if env is None: return {sys_msg: "Init first."}

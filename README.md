@@ -36,7 +36,7 @@ sentinel-soc/
 ├── client.py                 # EnvClient bridge
 ├── server/
 │   ├── app.py                # SentinelSOC Command Center (Gradio Dashboard)
-│   ├── support_ticket_triage_environment.py  # SOC environment logic
+│   ├── sentinel_env.py       # SOC environment logic
 │   ├── kb.json               # Security Playbooks (Threat Intel)
 │   ├── tickets.json          # Security Incidents (Easy, Medium, Hard)
 │   └── requirements.txt

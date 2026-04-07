@@ -55,7 +55,7 @@ def create_pdf():
         "Defines strict Pydantic schemas (SupportTicketTriageAction, SupportTicketTriageObservation). "
         "This provides the strict 'contract' dictating exactly what inputs the agent receives and exactly "
         "what actions (search_kb, update_ticket, reply) it is allowed to take via the OpenEnv API.\n\n"
-        "2. server/support_ticket_triage_environment.py:\n"
+        "2. server/sentinel_env.py:\n"
         "The core logic engine. It inherits from OpenEnv's Environment interface. It manages state transitions (step), "
         "enforces penalties (subtracting -0.01 per step to encourage fast solutions), limits episode length, "
         "handles the search algorithm for the knowledge base, and computes state potentials for rewards.\n\n"

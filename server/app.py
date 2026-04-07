@@ -32,7 +32,7 @@ base_app = create_app(
 )
 
 # Valid values matching tickets.json & models.py
-VALID_TEAMS = ["unassigned", "security", "billing", "network", "product"]
+VALID_TEAMS = ["unassigned", "security", "billing", "network", "product", "it_support", "hr"]
 VALID_PRIORITIES = ["unassigned", "medium", "high", "critical", "urgent"]
 VALID_STATUSES = ["open", "in_progress", "resolved", "escalated"]
 
@@ -459,17 +459,32 @@ def create_ui():
 
             system_prompt = (
                 f"You are SentinelAI, a {persona}. {directive}\n"
-                "Output ONLY a single flat JSON object with keys:\n"
-                "  'thinking': string — your chain-of-thought reasoning.\n"
+                "Output ONLY a single flat JSON object with these exact keys:\n"
+                "  'thinking': string — your step-by-step analysis of the ticket.\n"
                 "  'action_type': one of [investigate, mitigate, report, submit].\n"
-                "  'search_query': string (for investigate).\n"
-                "  'team': one of [security, billing, network, product] (for mitigate).\n"
-                "  'priority': one of [medium, high, critical, urgent] (for mitigate).\n"
-                "  'status': one of [open, in_progress, resolved, escalated] (for mitigate).\n"
-                "  'reply_text': string — full CISO incident report (for report action).\n"
-                "WORKFLOW: investigate first → mitigate (team/priority/status) → report → submit.\n"
-                "DO NOT repeat action_types you have already done unless necessary.\n"
-                "MANDATORY: No markdown fences, no extra keys."
+                "  'search_query': string describing what intel to look up (for investigate).\n"
+                "  'team': the correct deployment unit for this specific ticket. Choose from:\n"
+                "    security (cyberattacks, malware, unauthorized access, VPN, credentials)\n"
+                "    network (traffic, DNS, firewall, exfiltration, bandwidth)\n"
+                "    billing (financial data, payroll, payment systems)\n"
+                "    product (application bugs, APIs, SQL injection, WAF)\n"
+                "    it_support (general IT issues, hardware, software, antivirus)\n"
+                "    hr (employee issues, insider threats, access termination)\n"
+                "  'priority': severity level appropriate to the ticket:\n"
+                "    medium (low impact, no active breach)\n"
+                "    high (significant risk, needs attention soon)\n"
+                "    critical (active attack, data at risk)\n"
+                "    urgent (immediate action required, systems compromised)\n"
+                "  'status': incident lifecycle state:\n"
+                "    open (just identified), in_progress (being investigated)\n"
+                "    resolved (fully contained), escalated (requires senior response)\n"
+                "  'reply_text': a detailed CISO incident report (min 150 words) that MUST\n"
+                "    include: affected system/artifact, root cause analysis, containment steps\n"
+                "    taken, remediation plan, and specific technical terms from the ticket.\n"
+                "CRITICAL: Read the ticket carefully. Choose team/priority/status based on the\n"
+                "  ACTUAL CONTENT of the ticket, not generic defaults.\n"
+                "WORKFLOW: investigate → mitigate → report → submit (do not skip steps).\n"
+                "MANDATORY: No markdown fences. Output only the JSON object."
                 + hint_clause
             )
 

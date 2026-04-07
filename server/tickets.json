@@ -23,6 +23,42 @@
                 "status": "resolved",
                 "reply_keywords": ["unauthorized", "db-node", "disable", "admin"]
             }
+        },
+        {
+            "id": "inc_e_003",
+            "tactic": "Initial Access",
+            "ticket": "A staff member received a suspicious email from 'hr-update@corp-fake.com' asking them to re-enter their credentials on a linked form. They did not click the link.",
+            "artifact": "hr-update@corp-fake.com",
+            "expected": {
+                "team": "security",
+                "priority": "medium",
+                "status": "resolved",
+                "reply_keywords": ["phishing", "email", "credentials", "link", "report"]
+            }
+        },
+        {
+            "id": "inc_e_004",
+            "tactic": "Defense Evasion",
+            "ticket": "Antivirus software on WORKSTATION-12 was disabled without any change request ticket. The machine belongs to a sales rep who is currently on leave.",
+            "artifact": "WORKSTATION-12",
+            "expected": {
+                "team": "it_support",
+                "priority": "medium",
+                "status": "in_progress",
+                "reply_keywords": ["antivirus", "disabled", "workstation", "re-enable", "investigation"]
+            }
+        },
+        {
+            "id": "inc_e_005",
+            "tactic": "Discovery",
+            "ticket": "Server CORP-SCAN-01 is performing port scans on the internal network, hitting 200+ hosts in the last hour. No authorized scan is scheduled for today.",
+            "artifact": "CORP-SCAN-01",
+            "expected": {
+                "team": "security",
+                "priority": "high",
+                "status": "in_progress",
+                "reply_keywords": ["scan", "port", "unauthorized", "isolate", "investigation"]
+            }
         }
     ],
     "medium": [
@@ -52,6 +88,34 @@
                 "reply_keywords": ["payroll", "ssh", "internal", "data", "dump", "unusual"],
                 "requires_kb": true,
                 "kb_query_hint": "lateral movement"
+            }
+        },
+        {
+            "id": "inc_m_003",
+            "tactic": "Credential Access",
+            "ticket": "A cloud storage bucket 'CORP-BACKUP-US-01' was accessed from an unrecognized AWS region (ap-southeast-3). The access token used belongs to a developer who is on PTO.",
+            "artifact": "CORP-BACKUP-US-01",
+            "expected": {
+                "team": "security",
+                "priority": "critical",
+                "status": "escalated",
+                "reply_keywords": ["cloud", "access", "token", "revoke", "bucket", "unauthorized", "developer"],
+                "requires_kb": true,
+                "kb_query_hint": "cloud access"
+            }
+        },
+        {
+            "id": "inc_m_004",
+            "tactic": "Command and Control",
+            "ticket": "Network traffic analysis shows SUPPLY-SRV-07 making regular beaconing calls to 'beacon.update-patch.xyz' every 60 seconds. DNS was not blocked by the firewall.",
+            "artifact": "SUPPLY-SRV-07",
+            "expected": {
+                "team": "network",
+                "priority": "high",
+                "status": "in_progress",
+                "reply_keywords": ["beacon", "dns", "c2", "firewall", "block", "malware"],
+                "requires_kb": true,
+                "kb_query_hint": "command and control"
             }
         }
     ],
@@ -96,6 +160,34 @@
                 "reply_keywords": ["sql injection", "waf", "user", "api", "patch", "sanitize"],
                 "requires_kb": true,
                 "kb_query_hint": "sql injection"
+            }
+        },
+        {
+            "id": "inc_h_004",
+            "tactic": "Privilege Escalation",
+            "ticket": "A service account 'svc_etl_proc' running on ANALYTICS-NODE-02 has suddenly been granted Domain Admin rights. No change request or approval exists for this. Active Directory logs confirm the change was made 8 minutes ago.",
+            "artifact": "svc_etl_proc",
+            "expected": {
+                "team": "security",
+                "priority": "urgent",
+                "status": "escalated",
+                "reply_keywords": ["privilege", "domain admin", "escalation", "service account", "revoke", "active directory", "unauthorized"],
+                "requires_kb": true,
+                "kb_query_hint": "privilege escalation"
+            }
+        },
+        {
+            "id": "inc_h_005",
+            "tactic": "Collection",
+            "ticket": "HR reports that an employee JOHN-DOE-LAPTOP is bulk downloading all files from the shared drive '/finance/confidential' at 2 AM. The employee resigned yesterday and is in their notice period.",
+            "artifact": "JOHN-DOE-LAPTOP",
+            "expected": {
+                "team": "hr",
+                "priority": "urgent",
+                "status": "escalated",
+                "reply_keywords": ["insider", "download", "confidential", "finance", "revoke", "access", "resigned"],
+                "requires_kb": true,
+                "kb_query_hint": "insider threat"
             }
         }
     ]

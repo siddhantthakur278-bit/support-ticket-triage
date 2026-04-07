@@ -59,32 +59,49 @@ class SentinelSOCEnvironment(Environment):
             step_count=self._state.step_count,
         )
 
+    # Ordinal scales for partial-credit scoring
+    PRIORITY_SCALE = {"medium": 1, "high": 2, "critical": 3, "urgent": 4}
+    STATUS_SCALE   = {"open": 0, "in_progress": 1, "resolved": 2, "escalated": 3}
+
     def _compute_potential(self) -> float:
         if not self.task_level or not self._current_task_data:
             return 0.01
         exp = self._current_task_data["expected"]
         score = 0.0
         part_count = 0
-        
-        # Grading based on correct team routing (incident containment unit)
+
+        # ── Team routing: binary (either you routed correctly or not) ──────
         if "team" in exp:
             part_count += 1
             if self._ticket_team == exp["team"]:
                 score += 1.0
-        
-        # Grading based on severity assessment
+            # Partial credit if team is unassigned (agent didn't try at all)
+            elif self._ticket_team not in ("unassigned", None):
+                score += 0.2  # tried but wrong team
+
+        # ── Priority: ordinal partial credit ────────────────────────────────
         if "priority" in exp:
             part_count += 1
-            if self._ticket_priority == exp["priority"]:
+            exp_p = self.PRIORITY_SCALE.get(exp["priority"], 0)
+            got_p = self.PRIORITY_SCALE.get(self._ticket_priority, 0)
+            if exp_p == got_p:
                 score += 1.0
-        
-        # Grading based on incident status lifecycle
+            elif got_p > 0:  # at least assigned something
+                diff = abs(exp_p - got_p)
+                score += max(0.0, 1.0 - diff * 0.4)  # -0.4 per level off
+
+        # ── Status: ordinal partial credit ───────────────────────────────────
         if "status" in exp:
             part_count += 1
-            if self._ticket_status == exp["status"]:
+            exp_s = self.STATUS_SCALE.get(exp["status"], 0)
+            got_s = self.STATUS_SCALE.get(self._ticket_status, 0)
+            if exp_s == got_s:
                 score += 1.0
-        
-        # Grading based on Incident Report quality
+            else:
+                diff = abs(exp_s - got_s)
+                score += max(0.0, 1.0 - diff * 0.35)  # -0.35 per step off
+
+        # ── Incident report quality: keyword coverage + length ────────────────
         if "reply_keywords" in exp:
             part_count += 1
             report = self._draft_reply.lower()
@@ -92,25 +109,28 @@ class SentinelSOCEnvironment(Environment):
             if keywords and self._draft_reply.strip():
                 matched = sum(1 for kw in keywords if kw in report)
                 keyword_score = matched / len(keywords)
-                # Bonus for report detail length
-                length_bonus = min(len(self._draft_reply) / 600.0, 0.1)
+                # Bonus for detailed report (up to +0.15)
+                length_bonus = min(len(self._draft_reply) / 500.0, 0.15)
                 score += min(keyword_score + length_bonus, 1.0)
-                
-        # Grading based on Investigative depth (KB Intel)
+            # Empty report → 0 added
+
+        # ── KB investigation depth ────────────────────────────────────────────
         if exp.get("requires_kb"):
             part_count += 1
             if self._has_searched_kb:
-                kb_score = 0.5
+                kb_score = 0.4  # base: searched something
                 hint = exp.get("kb_query_hint", "")
                 if hint:
                     hint_words = set(hint.lower().split())
+                    best = 0.0
                     for query in self._search_history:
-                        query_words = set(query.lower().split())
-                        if hint_words & query_words:
-                            kb_score = 1.0
-                            break
+                        q_words = set(query.lower().split())
+                        overlap = len(hint_words & q_words) / max(len(hint_words), 1)
+                        best = max(best, overlap)
+                    # Scale from 0.4 (no overlap) to 1.0 (perfect overlap)
+                    kb_score = 0.4 + 0.6 * best
                 score += kb_score
-        
+
         raw_score = score / part_count if part_count > 0 else 0.0
         # Strictly between 0 and 1: clamp to [0.01, 0.99]
         return max(0.01, min(0.99, raw_score))

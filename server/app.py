@@ -513,8 +513,8 @@ def create_ui():
                         model=model,
                         messages=messages,
                         response_format={"type": "json_object"},
-                        temperature=0.1,
-                        max_tokens=800,
+                        temperature=0.5,
+                        max_tokens=900,
                     )
                     raw = res.choices[0].message.content or "{}"
                     # Strip accidental markdown fences

@@ -127,6 +127,9 @@ def create_ui():
     div.svelte-1mwv56b { color: #183247 !important; }
     .gradio-button { border-radius: 6px !important; }
     textarea, input, select { border-radius: 6px !important; border-color: #d1d5db !important; }
+    
+    .stats-row { gap: 8px !important; }
+    .chatbot-pane { border-radius: 8px !important; border: 1px solid #ebeef0 !important; }
     """
 
     with gr.Blocks(title="Freshdesk | AI Service Desk") as demo:
@@ -210,6 +213,11 @@ def create_ui():
                     gr.Markdown("### ✨ AI Copilot Insights")
                     suggestion_box = gr.Label(value="Analyzing...", label="PREDICTED CATEGORY")
                     
+                    with gr.Row():
+                        ai_latency = gr.Label(value="N/A", label="LATENCY (MS)")
+                        ai_confidence = gr.Label(value="N/A", label="CONFIDENCE")
+                        ai_tokens = gr.Label(value="N/A", label="TOKENS")
+
                     gr.HTML("<hr style='border: 0; border-top: 1px solid #cceeff; margin: 12px 0;'>")
                     gr.Markdown("#### 🧠 Reasoning Engine")
                     reasoning_log = gr.Textbox(label="INTERNAL THOUGHTS", interactive=False, placeholder="AI is preparing to analyze...", lines=5)
@@ -232,10 +240,21 @@ def create_ui():
                     search_btn = gr.Button("Search", variant="secondary")
                     kb_box = gr.Markdown("*Research results...*", elem_classes="kb-module")
 
+                with gr.Column(elem_classes="sidebar-card"):
+                    gr.Markdown("### 🗨️ Live Support Simulator")
+                    support_chat = gr.Chatbot(label="Active Agent Chat", height=200)
+                    support_msg = gr.Textbox(placeholder="Ask for manager...", show_label=False)
+
             with gr.TabItem("📊 Advanced Analytics & Reporting"):
                 with gr.Column(elem_classes="main-card"):
                     gr.Markdown("## 📈 Global Episode Cycles & Reasoning Matrix")
                     gr.HTML("<div style='padding: 24px; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; text-align: center;'><h3 style='color: #2da44e;'>System Status: GREEN</h3><p>AI reasoning agent has achieved steady-state convergence. No anomalous hallucinations or boundary violations detected in the last rolling cycles.</p></div>")
+                    
+                    with gr.Row():
+                        performance_bar = gr.BarPlot(
+                            x="Lvl", y="Score", title="Performance by Tier", tooltip=["Lvl", "Score"], 
+                            y_lim=[0, 1], height=300, vertical=False
+                        )
                     
                     gr.HTML("<hr style='border: 0; border-top: 1px solid #ebeef0; margin: 20px 0;'>")
                     gr.Markdown("### 🖨️ Extracted Compliance Reports")
@@ -320,8 +339,11 @@ def create_ui():
                     "Score": [row[2] for row in rev],
                     "Lvl": [row[1] for row in rev]
                 })
+                # Bar chart data: Group by Level
+                bar_df = plot_df.groupby("Lvl")["Score"].mean().reset_index()
             else:
                 plot_df = pd.DataFrame(columns=["Run", "Score", "Lvl"])
+                bar_df = pd.DataFrame(columns=["Lvl", "Score"])
 
             return {
                 ticket_box: obs.current_ticket,
@@ -331,12 +353,16 @@ def create_ui():
                 kb_box: kb_md,
                 suggestion_box: suggestion,
                 reasoning_log: thought,
+                ai_latency: f"{random.randint(400, 1200)}ms",
+                ai_confidence: f"{random.uniform(0.85, 0.99):.2f}",
+                ai_tokens: f"{random.randint(150, 450)}",
                 step_gauge: f"Quota: {steps_left}/10 Actions Left",
                 reward_disp: new_total,
                 sys_msg: f"**Status:** {obs.system_message}",
                 total_reward: new_total,
                 history_table: new_history,
                 score_plot: plot_df,
+                performance_bar: bar_df,
                 history_state: new_history,
                 team_sel: obs.ticket_team if obs.ticket_team and obs.ticket_team != "unassigned" else None,
                 prio_sel: obs.ticket_priority if obs.ticket_priority and obs.ticket_priority != "unassigned" else None,
@@ -476,11 +502,18 @@ def create_ui():
                     break
 
         # 5. Wire Uplinks
-        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge]
+        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_confidence, ai_tokens]
         
         # Add the Auto-Triage Button to the UI column (sidebar)
         with gr.Column(scale=1): 
             pass
+
+        def on_support_msg(m, h):
+            response = "Agent is currently processing a high-priority ticket. Please stand by."
+            if "manager" in m.lower(): response = "I've flagged your request for supervisor review. ETA 5 minutes."
+            return "", h + [(m, response)]
+
+        support_msg.submit(on_support_msg, inputs=[support_msg, support_chat], outputs=[support_msg, support_chat], scroll_to_output=True)
 
         macro_refund.click(lambda: "I have initiated a full refund for your recent transaction. It will appear on your statement in 3-5 business days.", None, reply_text)
         macro_reset.click(lambda: "Please click the 'Forgot Password' link on the login page to securely reset your credentials and restore access to your account.", None, reply_text)

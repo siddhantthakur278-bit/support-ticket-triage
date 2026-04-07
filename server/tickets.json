@@ -2,122 +2,100 @@
     "easy": [
         {
             "id": "inc_e_001",
-            "ticket": "Multiple failed login attempts from a known malicious IP (192.168.1.5) on the VPN endpoint. Total of 15 attempts in 2 minutes. Need to block the IP.",
+            "tactic": "Initial Access",
+            "ticket": "Multiple failed login attempts from a known malicious IP (192.168.1.5) on the VPN endpoint. Total of 15 attempts in 2 minutes. Need to block the IP and reset the VPN gateway.",
+            "artifact": "192.168.1.5",
             "expected": {
                 "team": "security",
                 "priority": "medium",
-                "status": "resolved"
+                "status": "resolved",
+                "reply_keywords": ["vpn", "block", "login", "malicious", "attempts"]
             }
         },
         {
             "id": "inc_e_002",
-            "ticket": "Suspicious email reported by the CEO's assistant. Contains a 'Click here for invoice' link to a non-standard domain. Please triage.",
+            "tactic": "Persistence",
+            "ticket": "A new administrative user was unexpectedly created on 'DB-NODE-03'. User: 'admin_sys_2'. I didn't authorize this. Please investigate and disable the account.",
+            "artifact": "admin_sys_2",
             "expected": {
                 "team": "security",
                 "priority": "high",
-                "status": "open"
-            }
-        },
-        {
-            "id": "inc_e_003",
-            "ticket": "User reports their laptop (ID: HW-9021) is extremely hot and fans are at 100%. Might be a hardware failure or a crypto-mining infection. Check with hardware team.",
-            "expected": {
-                "team": "hardware",
-                "priority": "medium",
-                "status": "in_progress"
-            }
-        },
-        {
-            "id": "inc_e_004",
-            "ticket": "Password reset required for user 'jsmith' who is locked out. No security flags detected. Standard IT support ticket.",
-            "expected": {
-                "team": "it_support",
-                "priority": "low",
-                "status": "resolved"
+                "status": "resolved",
+                "reply_keywords": ["unauthorized", "db-node", "disable", "admin"]
             }
         }
     ],
     "medium": [
         {
             "id": "inc_m_001",
-            "ticket": "ALERT: Billing database reports an unusual spike in large refunds processed for expired accounts. Total amount: $50,000. Investigated a potential compromise in the payment gateway or an insider threat.",
+            "tactic": "Initial Access",
+            "ticket": "A high-ranking executive reported a suspicious email from 'service.microsoft-internal.com' asking for their password and 2FA code. They clicked the link but didn't enter details.",
+            "artifact": "service.microsoft-internal.com",
             "expected": {
-                "requires_kb": true,
-                "kb_query_hint": "insider data exfiltration",
-                "team": "billing",
+                "team": "security",
                 "priority": "high",
-                "status": "open"
+                "status": "in_progress",
+                "reply_keywords": ["email", "link", "phishing", "microsoft", "password", "reset", "2fa"],
+                "requires_kb": true,
+                "kb_query_hint": "phishing"
             }
         },
         {
             "id": "inc_m_002",
-            "ticket": "Incident: Employee reports they clicked a link in a 'Policy Update' email that asked for their corporate password. Now they can't log in. They are in the HR department. Triage and coordinate with HR.",
+            "tactic": "Lateral Movement",
+            "ticket": "We see a massive amount of internal SSH traffic between 'HR-SRV-01' and 'PAYROLL-DB-01'. This is unusual for 3 AM. Possible attempt to dump payroll data.",
+            "artifact": "PAYROLL-DB-01",
             "expected": {
+                "team": "billing",
+                "priority": "critical",
+                "status": "escalated",
+                "reply_keywords": ["payroll", "ssh", "internal", "data", "dump", "unusual"],
                 "requires_kb": true,
-                "kb_query_hint": "phishing",
-                "team": "hr",
-                "priority": "high",
-                "status": "open"
-            }
-        },
-        {
-            "id": "inc_m_003",
-            "ticket": "Log surge: Multiple 503 errors detected on the main product API. Heavy traffic incoming from a distributed range of IPs. Hardware firewalls may be saturated.",
-            "expected": {
-                "requires_kb": true,
-                "kb_query_hint": "ddos traffic mitigation",
-                "team": "hardware",
-                "priority": "urgent",
-                "status": "in_progress"
-            }
-        },
-        {
-            "id": "inc_m_004",
-            "ticket": "Security alert: Web server logs show several requests with 'SELECT * FROM users' in the query string. Please check the product codebase for vulnerabilities.",
-            "expected": {
-                "requires_kb": true,
-                "kb_query_hint": "sql injection",
-                "team": "product",
-                "priority": "medium",
-                "status": "open"
+                "kb_query_hint": "lateral movement"
             }
         }
     ],
     "hard": [
         {
             "id": "inc_h_001",
-            "ticket": "CRITICAL: Node #SRV-778 is reporting a disk usage spike and files are being renamed to .crypt extension. This looks like an active ransomware attack in progress. Immediate isolation needed.",
+            "tactic": "Impact",
+            "ticket": "ALERT: Mass encryption detected on 'FILE-STORAGE-05'. Files are being renamed to .LOCK. A note says 'Pay or lose it'. The process is currently running on Node 55.",
+            "artifact": "FILE-STORAGE-05",
             "expected": {
-                "requires_kb": true,
-                "kb_query_hint": "ransomware containment",
-                "team": "it_support",
-                "priority": "critical",
+                "team": "security",
+                "priority": "urgent",
                 "status": "escalated",
-                "reply_keywords": ["isolate", "node", "ad accounts", "ransomware", "containment"]
+                "reply_keywords": ["ransomware", "lock", "encryption", "node 55", "isolate", "pay", "restore"],
+                "requires_kb": true,
+                "kb_query_hint": "ransomware containment"
             }
         },
         {
             "id": "inc_h_002",
-            "ticket": "High-severity alert: User reports their paycheck amount was modified. Investigation shows user 'admin_kb' logged in from a VPN in a region where they aren't located and accessed payroll data. Potential insider threat.",
+            "tactic": "Exfiltration",
+            "ticket": "Net-flow logs show 50GB of raw encrypted zip files being sent to a suspicious IP in a non-standard region (185.x.x.x). Source is our main backup server.",
+            "artifact": "185.x.x.x",
             "expected": {
-                "requires_kb": true,
-                "kb_query_hint": "insider data exfiltration",
-                "team": "hr",
-                "priority": "high",
+                "team": "network",
+                "priority": "urgent",
                 "status": "escalated",
-                "reply_keywords": ["suspend", "ad account", "hr", "legal", "audit", "exfiltration"]
+                "reply_keywords": ["exfiltration", "zip", "suspicious", "ip", "block", "backup", "data"],
+                "requires_kb": true,
+                "kb_query_hint": "ddos mitigation"
             }
         },
         {
             "id": "inc_h_003",
-            "ticket": "Emergency: Massive inbound traffic from a known botnet is hitting the firewall. Scrubbing center is overloaded and they are reporting a potential bypass. The billing API is down and transactions are failing. Need to block high-volume CIDRs.",
+            "tactic": "Initial Access",
+            "ticket": "Multiple web requests to '/api/v1/user?id=1 OR 1=1' detected on the main production front-end. WAF caught some, but some passed.",
+            "artifact": "user?id=1 OR 1=1",
             "expected": {
-                "requires_kb": true,
-                "kb_query_hint": "ddos traffic mitigation",
-                "team": "hardware",
-                "priority": "urgent",
+                "team": "product",
+                "priority": "critical",
                 "status": "in_progress",
-                "reply_keywords": ["scrubbing center", "isp", "cidr", "ddos", "block", "firewall"]
+                "reply_keywords": ["sql injection", "waf", "user", "api", "patch", "sanitize"],
+                "requires_kb": true,
+                "kb_query_hint": "sql injection"
             }
         }
     ]

@@ -2,37 +2,29 @@
     {
         "id": "kb_sec_001",
         "title": "Mitigating Phishing Attacks (Playbook PH-1)",
-        "content": "If a user reports a phishing email: 1. Confirm source IP and sender domain. 2. If malicious, reset user credentials and enable MFA. 3. Route to the Security Response team. 4. Set priority to 'high'.",
-        "tags": ["phishing", "email", "credential", "reset", "MFA", "security"]
+        "tactic": "Initial Access",
+        "content": "If a user reports a phishing email: 1. Confirm source IP and sender domain. 2. If malicious, reset user credentials and isolate the local endpoint. 3. Tag incident as 'Phishing Encounter'.",
+        "tags": ["phishing", "credentials", "initial_access"]
     },
     {
         "id": "kb_sec_002",
-        "title": "Handling Brute-Force Password Attacks (Playbook BF-1)",
-        "content": "When multiple failed login attempts are detected: 1. Block the source IP addr immediately. 2. Lock the targeted account for 30 minutes. 3. Monitor login logs for further patterns. 4. Set status to 'resolved' once IP is blocked. Priority: 'medium'.",
-        "tags": ["brute-force", "login", "password", "IP", "block", "security"]
+        "title": "Ransomware Containment (Playbook RA-7)",
+        "tactic": "Impact",
+        "content": "CRITICAL: Ransomware detected. 1. Immediately isolate the segment. 2. Lock AD account. 3. Disable the affected segment's VPN gateway. DO NOT restart the server as it may trigger encryption. Tag as 'Ransomware Outbreak'.",
+        "tags": ["ransomware", "encryption", "containment", "impact"]
     },
     {
         "id": "kb_sec_003",
-        "title": "Ransomware Containment Protocol (Playbook RANS-5)",
-        "content": "Alert: Active encryption detected. Immediate Action Required: 1. Isolate the affected node from the network. 2. Disable all Active Directory service accounts associated with the node. 3. Alert CISO/IT Support. 4. Priority: 'critical'. Status: 'escalated'.",
-        "tags": ["ransomware", "encryption", "isolate", "node", "critical", "security"]
+        "title": "DDoS Mitigation - Volumetric Attacks",
+        "tactic": "Impact",
+        "content": "Heavy incoming traffic detected. 1. Route traffic through Scrubbing center. 2. Block the offending CIDR block (usually 185.x.x.x). 3. Notify the 'network' unit immediately. Tag as 'DDoS Event'.",
+        "tags": ["ddos", "traffic", "network", "impact"]
     },
     {
         "id": "kb_sec_004",
-        "title": "DDoS Traffic Mitigation (Playbook DDOS-2)",
-        "content": "For massive incoming traffic spikes: 1. Divert traffic to the hardware scrubbing center. 2. Update firewall status to 'in_progress'. 3. Coordinate with ISP to block high-volume CIDR ranges. Priority: 'urgent'. Roughed to 'hardware' team.",
-        "tags": ["ddos", "traffic", "spike", "firewall", "hardware", "urgent", "security"]
-    },
-    {
-        "id": "kb_sec_005",
-        "title": "Detecting Insider Data Exfiltration (Playbook DX-4)",
-        "content": "Unusual data transfer volumes from internal servers: 1. Suspend the user's AD account. 2. Flag for review by HR and Legal. 3. Audit database access logs. Priority: 'high'. Route to 'security' or 'hr'.",
-        "tags": ["insider", "data", "exfiltration", "audit", "hr", "high", "security"]
-    },
-    {
-        "id": "kb_sec_006",
-        "title": "SQL Injection Alert (Playbook SQL-1)",
-        "content": "For suspicious characters in web forms/URL params: 1. Sanitize application inputs. 2. Patch vulnerable web controller code. 3. Review DB impact logs. Team: 'product'. Priority: 'medium'.",
-        "tags": ["sql-injection", "web", "patch", "product", "medium", "security"]
+        "title": "SQL Injection Probe Response",
+        "tactic": "Initial Access",
+        "content": "Database audit logs show illegal characters (', --, #). 1. Block the source IP in the WAF (Web Application Firewall). 2. Force a schema validation check. 3. Escalate to the 'product' team for a patch. Tag as 'Injection Attempt'.",
+        "tags": ["sql_injection", "database", "waf", "initial_access"]
     }
 ]

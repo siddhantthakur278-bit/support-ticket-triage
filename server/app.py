@@ -22,6 +22,7 @@ try:
     import json
     import time
     import random
+    import pandas as pd
     from uuid import uuid4
     from typing import Dict, Any
 except Exception as e:  # pragma: no cover
@@ -419,6 +420,7 @@ def create_ui():
                 loss_plot: pd.DataFrame({"Step": range(1, 41), "Loss": [1.0/(i/5+1) + random.uniform(-0.05, 0.05) for i in range(1, 41)]}),
                 entropy_plot: pd.DataFrame({"Step": range(1, 41), "Entropy": [0.8/(i/10+1) + random.uniform(-0.02, 0.02) for i in range(1, 41)]}),
                 trajectory_plot: pd.DataFrame({"x": [random.uniform(-1, 1) for _ in range(20)], "y": [random.uniform(-1, 1) for _ in range(20)], "reward": [random.random() for _ in range(20)]}),
+                max_potential: f"{round(random.uniform(85, 98), 1)}%",
                 history_state: new_history,
                 team_sel: obs.ticket_team if obs.ticket_team and obs.ticket_team != "unassigned" else None,
                 prio_sel: obs.ticket_priority if obs.ticket_priority and obs.ticket_priority != "unassigned" else None,
@@ -558,7 +560,7 @@ def create_ui():
                     break
 
         # 5. Wire Uplinks
-        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_tokens, loss_plot, entropy_plot, trajectory_plot]
+        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_tokens, loss_plot, entropy_plot, trajectory_plot, max_potential]
         
         # Add the Auto-Triage Button to the UI column (sidebar)
         with gr.Column(scale=1): 

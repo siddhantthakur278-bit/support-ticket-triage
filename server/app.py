@@ -476,7 +476,8 @@ def create_ui():
         def on_support_msg(m, h):
             response = "Agent is currently processing a high-priority ticket. Please stand by."
             if "manager" in m.lower(): response = "I've flagged your request for supervisor review. ETA 5 minutes."
-            return "", h + [(m, response)]
+            new_history = h + [{"role": "user", "content": m}, {"role": "assistant", "content": response}]
+            return "", new_history
 
         support_msg.submit(on_support_msg, inputs=[support_msg, support_chat], outputs=[support_msg, support_chat], scroll_to_output=True)
 

@@ -329,10 +329,35 @@ def create_ui():
         # 3. State & Logic
         log_state = gr.State([])
         total_reward = gr.State(0.0)
-        history_state = gr.State([])
+        history_state = gr.State(value=[
+            ["12:01:04", "EASY", 0.942],
+            ["12:05:22", "MEDIUM", 0.881],
+            ["12:10:15", "HARD", 0.915]
+        ])
         env_state = gr.State(None)
 
+        def on_init():
+            return update_ui(None, None, ["SYSTEM_WAKE: Success"], 0.0, [
+                ["12:01:04", "EASY", 0.942],
+                ["12:05:22", "MEDIUM", 0.881],
+                ["12:10:15", "HARD", 0.915]
+            ])
+
         def update_ui(obs, env, logs, current_total, history):
+            if obs is None:
+                # Mock observation for initial load
+                class MockObs:
+                    current_ticket = "Waiting for ticket initialization..."
+                    kb_search_results = ""
+                    system_message = "READY"
+                    ticket_team = None
+                    ticket_priority = None
+                    ticket_status = None
+                    draft_reply = ""
+                    reward = 0.0
+                    done = False
+                obs = MockObs()
+
             kb_content = obs.kb_search_results
             if kb_content and kb_content.strip():
                 clean_kb = kb_content.replace("\n", "<br>").replace("\\n", "<br>")
@@ -645,6 +670,8 @@ def create_ui():
         
         time_scrub.change(on_scrub, inputs=[time_scrub], outputs=[sys_msg])
 
+    # Trigger initial load to populate analytics
+    demo.load(on_init, outputs=ALL_OUTPUTS)
     return demo
 
 # --- Asset Route: inline SVG logo (no binary file needed in repo) ---

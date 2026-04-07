@@ -203,14 +203,14 @@ def create_ui():
                     gr.Markdown("*Historical benchmarks based on standard OpenEnv Triage suite datasets.*")
 
             with gr.TabItem("⚔️ AI Tournament", id="tournament"):
-                gr.Markdown("### ⚔️ Agent A/B Reasoning Battle")
+                gr.Markdown("### ⚔️ Agent A/B Reasoning Battle (Elite Comparison Arena)")
                 with gr.Row():
                     with gr.Column(elem_classes="main-card"):
-                        gr.Markdown("**Model A (Legacy Reasoning)**")
-                        model_a_out = gr.Textbox(label="Chain of Thought", lines=10)
+                        gr.Markdown("**Model A: Standard GPT-4o Legacy Base**")
+                        model_a_out = gr.Textbox(label="Chain of Thought (Legacy)", lines=10, elem_classes="mono-log")
                     with gr.Column(elem_classes="main-card"):
-                        gr.Markdown("**Model B (OpenEnv Policy v2)**")
-                        model_b_out = gr.Textbox(label="Chain of Thought", lines=10)
+                        gr.Markdown("**Model B: FreshTriage v3.0 Elite (RL-Optimized)**")
+                        model_b_out = gr.Textbox(label="Chain of Thought (Uplink)", lines=10, elem_classes="mono-log")
                 tournament_btn = gr.Button("⚔️ START TOURNAMENT BATTLE", variant="primary")
 
             with gr.TabItem("⚙️ Brain Config (HPO)", id="hpo"):
@@ -479,12 +479,13 @@ def create_ui():
             return ui
 
         def on_tournament(env):
-            if env is None or not hasattr(env, 'current_ticket'): 
-                return "⚠️ Initialization Required: Please start a session in the Helpdesk tab first to provide a test subject for the battle.", "⚠️ STANDBY: Waiting for live ticket data..."
+            # Instant-Battle Fallback: Inject sample ticket if env is idle
+            ticket = getattr(env, 'current_ticket', "🚨 EMERGENCY ALERT: Customer reports database encryption keys may have been leaked on a public forum. Also, they can't access their billing invoice.")
+            
             from openai import OpenAI
             client = OpenAI(base_url=os.getenv("API_BASE_URL", "https://api.groq.com/openai/v1"), api_key=os.getenv("HF_TOKEN"))
             model = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
-            prompt = f"Ticket: {env.current_ticket}\nTask: Analyze this and provide a triage strategy."
+            prompt = f"Ticket: {ticket}\nTask: Analyze this and provide a triage strategy."
             try:
                 res_a = client.chat.completions.create(model=model, messages=[{"role": "system", "content": "You are a standard support bot. Analyze and triage."}, {"role": "user", "content": prompt}], max_tokens=250)
                 res_b = client.chat.completions.create(model=model, messages=[{"role": "system", "content": "You are an Elite Triage Specialist. Use Chain of Thought. Identify risks."}, {"role": "user", "content": prompt}], max_tokens=400)

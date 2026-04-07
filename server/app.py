@@ -319,7 +319,11 @@ def create_ui():
         triage_btn.click(lambda tm, p, s, l, t, h, e: update_ui(e.step(SentinelAction(action_type="mitigate", team=tm, priority=p, status=s)), e, t, h), inputs=[team_sel, prio_sel, stat_sel, gr.State([]), total_reward, history_state, env_state], outputs=ALL_OUT)
         submit_btn.click(lambda l, t, h, e: update_ui(e.step(SentinelAction(action_type="submit")), e, t, h), inputs=[gr.State([]), total_reward, history_state, env_state], outputs=ALL_OUT)
         
-        demo.load(lambda: update_ui(None, None, 0.0, []), outputs=ALL_OUT)
+        def on_init():
+            initial_history = [["08:00", "EASY", 0.94], ["08:15", "MEDIUM", 0.82], ["08:45", "HARD", 0.76]]
+            return update_ui(None, None, 0.0, initial_history)
+
+        demo.load(on_init, outputs=ALL_OUT)
         
     return demo
 

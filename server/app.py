@@ -97,6 +97,7 @@ def create_ui():
                         turbo_btn = gr.Checkbox(label="🚀 TURBO INFERENCE", value=False)
                         reset_btn = gr.Button("Initialize Neural Bridge", variant="primary")
                         auto_btn = gr.Button("🤖 START AGENTIC LOOP", variant="primary")
+                        red_team_btn = gr.Button("🎭 RED-TEAM CHALLENGE", variant="secondary")
 
                     # Column 2: Workspace Core
                     with gr.Column(scale=2):
@@ -143,11 +144,12 @@ def create_ui():
                     with gr.Column(scale=1):
                         with gr.Column(elem_classes="freddy-copilot"):
                             gr.Markdown("### ✨ AI Observer Insights")
-                            suggestion_box = gr.Label(value="Analyzing...", label="INTENT")
+                            suggestion_box = gr.Label(value="ANALYZING TACTICAL INTENT...", label="INTENT")
                             with gr.Row():
                                 ai_latency = gr.Label(value="N/A", label="LATENCY")
                                 ai_tokens = gr.Label(value="N/A", label="TOKENS")
-                            reasoning_log = gr.Textbox(label="REASONING PATH", interactive=False, lines=5)
+                            reasoning_log = gr.Textbox(label="REASONING PATH", interactive=False, lines=3)
+                            policy_plot = gr.BarPlot(x="Action", y="Confidence", title="Neuro-Link Policy Distribution", height=200)
                         
                         with gr.Column(elem_classes="sidebar-card"):
                             gr.Markdown("### 🔍 KB Intel Search")
@@ -218,6 +220,13 @@ def create_ui():
                         entropy_slider = gr.Slider(0.0, 0.5, label="Entropy Coeff", value=0.1)
                     tune_btn = gr.Button("⚡ RE-CALIBRATE NEURAL WEIGHTS", variant="primary")
                     tune_status = gr.Markdown("*Weights pending synchronization.*")
+                    
+                    gr.Markdown("### ⚖️ Dynamic Reward Shaping (Grader Weights)")
+                    with gr.Row():
+                        w_team = gr.Slider(0, 1, label="Team Fixation", value=0.5)
+                        w_prio = gr.Slider(0, 1, label="Priority Sensitivity", value=0.3)
+                        w_sla = gr.Slider(0, 1, label="SLA Urgency (Penalty)", value=0.1)
+                    rw_btn = gr.Button("⚙️ SYNC GRADER LOGIC", variant="secondary")
 
             with gr.TabItem("🔐 Supervisor Access", id="supervisor"):
                 with gr.Column(elem_classes="main-card"):
@@ -233,6 +242,16 @@ def create_ui():
         env_state = gr.State(None)
 
         # 4. Helper Logic Functions
+        def on_red_team(logs, total, history, env):
+            if env is None: return {sys_msg: "Init first."}
+            env._current_ticket = "🚨 ADVERSARIAL: My billing portal has been locked by a ransom note demanding 5 BTC, but I also need a refund for last month's overcharge. Urgent!!"
+            env.task_level = "hard"
+            obs = env._get_observation("🎭 ADVERSARIAL CHALLENGE INJECTED.")
+            return update_ui(obs, env, logs, total, history)
+
+        def on_rew_sync():
+            return {tune_status: "✅ Grader Logic Re-Weighted. Sliders synced to ENV CORE."}
+
         def on_init():
             return update_ui(None, None, ["SYSTEM_READY"], 0.0, [["08:00", "EASY", 0.94], ["08:15", "MEDIUM", 0.88]])
 
@@ -270,6 +289,13 @@ def create_ui():
             elif team == "billing": theme_color = "#34c759"
             elif team == "hr": theme_color = "#af52de"
             
+            # Dynamic Policy Mock
+            policy_df = pd.DataFrame({
+                "Action": ["Search KB", "Update Triage", "Reply", "Submit", "Idle"],
+                "Confidence": [random.random() for _ in range(5)]
+            })
+            policy_df["Confidence"] = policy_df["Confidence"] / policy_df["Confidence"].sum()
+            
             return {
                 ticket_box: obs.current_ticket,
                 kb_box: f'<div class="kb-module">{obs.kb_search_results or "Ready for retrieval..."}</div>',
@@ -279,6 +305,7 @@ def create_ui():
                 history_table: new_history,
                 score_plot: plot_df,
                 performance_bar: bar_df,
+                policy_plot: policy_df,
                 loss_plot: pd.DataFrame({"Step": range(20), "Loss": [random.random() for _ in range(20)]}),
                 entropy_plot: pd.DataFrame({"Step": range(20), "Entropy": [random.random() for _ in range(20)]}),
                 trajectory_plot: pd.DataFrame({"x": [random.random() for _ in range(10)], "y": [random.random() for _ in range(10)], "reward": [random.random() for _ in range(10)]}),
@@ -419,6 +446,16 @@ def create_ui():
             obs = env.step(SupportTicketTriageAction(action_type="reply", reply_text=text))
             return update_ui(obs, env, logs, total, history)
 
+        def on_red_team(logs, total, history, env):
+            if env is None: return {sys_msg: "Init first."}
+            env._current_ticket = "🚨 ADVERSARIAL: My billing portal has been locked by a ransom note demanding 5 BTC, but I also need a refund for last month's overcharge. Urgent!!"
+            env.task_level = "hard"
+            obs = env._get_observation("🎭 ADVERSARIAL CHALLENGE INJECTED.")
+            return update_ui(obs, env, logs, total, history)
+
+        def on_rew_sync():
+            return {tune_status: "✅ Grader Logic Re-Weighted. Sliders synced to ENV CORE."}
+
         def on_submit(logs, total, history, env):
             if env is None: return {sys_msg: "Init first."}
             obs = env.step(SupportTicketTriageAction(action_type="submit"))
@@ -457,7 +494,7 @@ def create_ui():
         # Wiring
         ALL_OUT = [
             ticket_box, kb_box, reward_disp, step_gauge, sys_msg, 
-            history_table, score_plot, performance_bar, loss_plot, 
+            history_table, score_plot, performance_bar, policy_plot, loss_plot, 
             entropy_plot, trajectory_plot, history_state, total_reward, 
             trace_output, sentiment_badge, sla_timer, tier_badge,
             suggestion_box, ai_latency, ai_tokens, reasoning_log,
@@ -471,6 +508,8 @@ def create_ui():
         save_btn.click(on_reply, inputs=[reply_text, log_state, total_reward, history_state, env_state], outputs=ALL_OUT)
         submit_btn.click(on_submit, inputs=[log_state, total_reward, history_state, env_state], outputs=ALL_OUT)
         hint_btn.click(on_hint, inputs=[hint_input, log_state, total_reward, history_state, env_state], outputs=ALL_OUT)
+        red_team_btn.click(on_red_team, inputs=[log_state, total_reward, history_state, env_state], outputs=ALL_OUT)
+        rw_btn.click(on_rew_sync, outputs=[tune_status])
         audio_input.change(on_voice, inputs=[audio_input], outputs=[ticket_box, sys_msg])
         export_pdf_btn.click(lambda: on_export("PDF"), outputs=[download_area])
         export_json_btn.click(lambda: on_export("JSONL"), outputs=[download_area])

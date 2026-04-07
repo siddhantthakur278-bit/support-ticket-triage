@@ -284,17 +284,64 @@ def create_ui():
                 try:
                     res = client.chat.completions.create(
                         model=model,
-                        messages=[{"role": "system", "content": "You are a support agent. Output ONLY valid JSON: {\"thinking\": \"...\", \"action\": {\"action_type\": \"...\", \"reply_text\": \"...\", \"team\": \"...\", \"priority\": \"...\", \"status\": \"...\", \"search_query\": \"...\"}}"}, {"role": "user" , "content": str(state.__dict__)}],
+                        messages=[
+                            {"role": "system", "content": "You are a support triage agent. You MUST output ONLY valid JSON. \n\nRULES:\n1. 'action_type' MUST be exactly one of: search_kb, update_ticket, reply, submit.\n2. 'team' MUST be exactly one of: billing, it_support, product, hardware, security, hr.\n3. 'priority' MUST be exactly one of: low, medium, high, critical, urgent.\n4. 'status' MUST be exactly one of: open, in_progress, resolved, escalated.\n\nJSON SCHEMA: {\"thinking\": \"...\", \"action\": {\"action_type\": \"...\", \"reply_text\": \"...\", \"team\": \"...\", \"priority\": \"...\", \"status\": \"...\", \"search_query\": \"...\"}}"},
+                            {"role": "user", "content": f"OBSERVATION: {str(state.__dict__)}"}
+                        ],
                         response_format={"type": "json_object"}
                     )
                     data = json.loads(res.choices[0].message.content)
                     action_data = data.get("action", data)
-                    allowed = {"action_type", "search_query", "priority", "team", "status", "reply_text"}
-                    sanitized = {k:v for k,v in action_data.items() if k in allowed}
+                    
+                    # --- NUCLEAR SANITIZATION ---
+                    # 1. Action Type Alignment
+                    at = str(action_data.get("action_type", "search_kb")).lower()
+                    if "search" in at: at = "search_kb"
+                    elif "triage" in at or "update" in at or "manage" in at or "route" in at: at = "update_ticket"
+                    elif "reply" in at or "draft" in at or "message" in at: at = "reply"
+                    elif "submit" in at or "close" in at or "resolve" in at: at = "submit"
+                    else: at = "search_kb"
+                    
+                    # 2. Team Alignment
+                    team = str(action_data.get("team", "it_support")).lower()
+                    if "bill" in team or "pay" in team or "refund" in team: team = "billing"
+                    elif "it" in team or "support" in team or "tech" in team: team = "it_support"
+                    elif "prod" in team or "feature" in team: team = "product"
+                    elif "hard" in team or "laptop" in team or "monitor" in team: team = "hardware"
+                    elif "sec" in team or "breach" in team or "hack" in team: team = "security"
+                    elif "hr" in team or "pay" in team: team = "hr"
+                    else: team = "it_support"
+                    
+                    # 3. Prio Alignment
+                    prio = str(action_data.get("priority", "medium")).lower()
+                    if prio not in ["low", "medium", "high", "critical", "urgent"]:
+                        if "low" in prio: prio = "low"
+                        elif "urg" in prio or "crit" in prio: prio = "critical"
+                        elif "high" in prio: prio = "high"
+                        else: prio = "medium"
+                    
+                    # 4. Status Alignment
+                    stat = str(action_data.get("status", "open")).lower()
+                    if stat not in ["open", "in_progress", "resolved", "escalated"]:
+                        if "open" in stat: stat = "open"
+                        elif "prog" in stat: stat = "in_progress"
+                        elif "res" in stat or "close" in stat: stat = "resolved"
+                        elif "esc" in stat: stat = "escalated"
+                        else: stat = "open"
+
+                    sanitized = {
+                        "action_type": at,
+                        "search_query": action_data.get("search_query", "support policy"),
+                        "reply_text": action_data.get("reply_text", action_data.get("message", "")),
+                        "team": team,
+                        "priority": prio,
+                        "status": stat
+                    }
+                    
                     action_obj = SupportTicketTriageAction(**sanitized)
                     obs = env.step(action_obj)
                     ui_update = update_ui(obs, env, [], current_total, history)
-                    ui_update[reasoning_log] = data.get("thinking", "Processing...")
+                    ui_update[reasoning_log] = data.get("thinking", "Executing resolution strategy...")
                     yield ui_update
                     current_total = ui_update[reward_disp]
                     if obs.done: break

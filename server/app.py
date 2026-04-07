@@ -21,6 +21,7 @@ try:
     import os
     import json
     import time
+    import random
     from typing import Dict, Any
 except Exception as e:  # pragma: no cover
     raise ImportError(
@@ -145,131 +146,96 @@ def create_ui():
             with gr.Column(scale=1):
                 gr.HTML('<div style="text-align: right; font-size: 0.85rem; opacity: 0.8;">SESSION: META-HACK-V1<br>UPLINK: STABLE</div>')
 
-        # 2. Main Content
-        with gr.Tabs(elem_classes="global-tabs"), gr.TabItem("🎫 Helpdesk Triage"), gr.Row():
-            # LEFT: Ticket Context & Triage
-            with gr.Column(scale=1):
-                with gr.Column(elem_classes="sidebar-card"):
-                    gr.Markdown("### ⚙️ Session Settings")
-                    task_type = gr.Dropdown(["easy", "medium", "hard"], label="LEVEL", value="easy")
-                    reset_btn = gr.Button("Initialize Ticket", variant="primary", scale=1)
-                    auto_btn = gr.Button("🤖 RUN AI AUTO-TRIAGE", variant="primary")
-                
-                with gr.Column(elem_classes="sidebar-card"):
-                    gr.Markdown("### 📍 Triage Details")
-                    team_sel = gr.Dropdown(["billing", "it_support", "product", "hardware", "security", "hr"], label="ASSIGN TO")
-                    prio_sel = gr.Dropdown(["low", "medium", "high", "critical", "urgent"], label="PRIORITY")
-                    stat_sel = gr.Dropdown(["open", "in_progress", "resolved", "escalated"], label="STATUS")
-                    triage_btn = gr.Button("Update Triage", variant="secondary")
-
-                with gr.Column(elem_classes="sidebar-card"):
-                    gr.Markdown("### 📊 Metrics")
-                    reward_disp = gr.Number(value=0.0, label="EPISODE SCORE", precision=3)
-                    step_gauge = gr.Label(value="10/10", label="TURNS REMAINING")
-
-            # MIDDLE: Conversation Area
-            with gr.Column(scale=2, elem_classes="main-card"):
-                with gr.Tabs():
-                    with gr.TabItem("💬 Conversation"):
-                        gr.Markdown("## 🎟️ Active Ticket Details")
+        # 2. Main Content (Mega-Tabs Unified Architecture)
+        with gr.Tabs(elem_classes="global-tabs"):
+            
+            with gr.TabItem("🎫 Helpdesk Operations"):
+                with gr.Row():
+                    # Left Sidebar
+                    with gr.Column(scale=1):
+                        with gr.Column(elem_classes="sidebar-card"):
+                            gr.Markdown("### ⚙️ Session Settings")
+                            task_type = gr.Dropdown(["easy", "medium", "hard"], label="LEVEL", value="easy")
+                            reset_btn = gr.Button("Initialize Ticket", variant="primary")
+                            auto_btn = gr.Button("🤖 AI AUTO-TRIAGE", variant="primary")
                         
-                        with gr.Row():
-                            sentiment_badge = gr.Label(value="NEUTRAL 😐", label="CUSTOMER SENTIMENT")
-                            sla_timer = gr.Label(value="24h 00m", label="SLA BREACH CLOCK")
-                            tier_badge = gr.Label(value="Standard", label="CUSTOMER TIER")
-                            
-                        ticket_box = gr.Textbox(label="CUSTOMER REQUEST", interactive=False, lines=5)
+                        with gr.Column(elem_classes="sidebar-card"):
+                            gr.Markdown("### 📍 Triage Details")
+                            team_sel = gr.Dropdown(["billing", "it_support", "product", "hardware", "security", "hr"], label="ASSIGN TO")
+                            prio_sel = gr.Dropdown(["low", "medium", "high", "critical", "urgent"], label="PRIORITY")
+                            stat_sel = gr.Dropdown(["open", "in_progress", "resolved", "escalated"], label="STATUS")
+                            triage_btn = gr.Button("Update Triage", variant="secondary")
+
+                        with gr.Column(elem_classes="sidebar-card"):
+                            gr.Markdown("### 📊 Metrics")
+                            reward_disp = gr.Number(value=0.0, label="EPISODE SCORE", precision=3)
+                            step_gauge = gr.Label(value="10/10", label="TURNS REMAINING")
+
+                    # Middle
+                    with gr.Column(scale=2, elem_classes="main-card"):
+                        with gr.Tabs():
+                            with gr.TabItem("💬 Conversation"):
+                                with gr.Row():
+                                    sentiment_badge = gr.Label(value="NEUTRAL", label="SENTIMENT")
+                                    sla_timer = gr.Label(value="24h 00m", label="SLA")
+                                    tier_badge = gr.Label(value="Standard", label="TIER")
+                                ticket_box = gr.Textbox(label="CUSTOMER REQUEST", interactive=False, lines=4)
+                                gr.Markdown("### ⚡ Macros")
+                                with gr.Row():
+                                    macro_refund = gr.Button("💰 Refund", size="sm")
+                                    macro_reset = gr.Button("🔑 Reset", size="sm")
+                                    macro_escalate = gr.Button("🚨 Escalate", size="sm", variant="stop")
+                                reply_text = gr.Textbox(placeholder="Type draft...", label="DRAFT REPLY", lines=3)
+                                with gr.Row():
+                                    save_btn = gr.Button("Save Draft", variant="secondary")
+                                    submit_btn = gr.Button("Submit & Close", variant="primary")
+                                sys_msg = gr.Markdown("*System online.*")
+
+                            with gr.TabItem("📝 Notes & Linked"):
+                                gr.Markdown("### 🔒 Private Notes")
+                                gr.Textbox(placeholder="Internal team notes...", show_label=False, lines=5)
+                                gr.Button("Link to Jira Ticket", variant="secondary")
+
+                    # Right
+                    with gr.Column(scale=1):
+                        with gr.Column(elem_classes="freddy-copilot"):
+                            gr.Markdown("### ✨ AI Insights")
+                            suggestion_box = gr.Label(value="Analyzing...", label="CATEGORY")
+                            with gr.Row():
+                                ai_latency = gr.Label(value="N/A", label="LATENCY")
+                                ai_tokens = gr.Label(value="N/A", label="TOKENS")
+                            reasoning_log = gr.Textbox(label="REASONING", interactive=False, lines=5)
                         
-                        gr.HTML("<hr style='border: 0; border-top: 1px solid #ebeef0; margin: 20px 0;'>")
-                        
-                        gr.Markdown("### ⚡ Quick Macros")
-                        with gr.Row():
-                            macro_refund = gr.Button("💰 Issue Refund", size="sm")
-                            macro_reset = gr.Button("🔑 Password Reset", size="sm")
-                            macro_escalate = gr.Button("🚨 Escalate to L2", size="sm", variant="stop")
-                            
-                        gr.Markdown("### ✉️ Response Draft")
-                        reply_text = gr.Textbox(placeholder="Type your resolution here...", label="DRAFT REPLY", lines=4)
-                        
-                        with gr.Row():
-                            save_btn = gr.Button("Save Draft", variant="secondary")
-                            submit_btn = gr.Button("Submit & Close Ticket", variant="primary")
-                        
-                        sys_msg = gr.Markdown("*System messages will appear here after actions.*")
+                        with gr.Column(elem_classes="sidebar-card"):
+                            gr.Markdown("### 🔍 KB Intel")
+                            search_query = gr.Textbox(placeholder="Search KB...", show_label=False)
+                            search_btn = gr.Button("Search", variant="secondary")
+                            kb_box = gr.Markdown("*Research results...*", elem_classes="kb-module")
 
-                    with gr.TabItem("📝 Internal Notes"):
-                        gr.Markdown("### 🔒 Private Agent Notes")
-                        gr.Textbox(placeholder="@IT_Support Please review the logs attached...", label="INTERNAL COMMENT", lines=8)
-                        gr.Button("💾 Append Note", variant="secondary")
-                        
-                    with gr.TabItem("🔗 Linked Assets"):
-                        gr.Markdown("### ⚙️ External Integrations")
-                        gr.HTML("<div style='padding: 16px; border: 1px dashed #ccc; border-radius: 8px; text-align: center; color: #666;'>No Jira bug tickets or Stripe invoices linked to this customer yet.</div>")
-                        gr.Button("Link to Jira / GitHub", variant="secondary")
-
-            # RIGHT: AI Copilot & Insights
-            with gr.Column(scale=1):
-                with gr.Column(elem_classes="freddy-copilot"):
-                    gr.Markdown("### ✨ AI Copilot Insights")
-                    suggestion_box = gr.Label(value="Analyzing...", label="PREDICTED CATEGORY")
-                    
-                    with gr.Row():
-                        ai_latency = gr.Label(value="N/A", label="LATENCY (MS)")
-                        ai_confidence = gr.Label(value="N/A", label="CONFIDENCE")
-                        ai_tokens = gr.Label(value="N/A", label="TOKENS")
-
-                    gr.HTML("<hr style='border: 0; border-top: 1px solid #cceeff; margin: 12px 0;'>")
-                    gr.Markdown("#### 🧠 Reasoning Engine")
-                    reasoning_log = gr.Textbox(label="INTERNAL THOUGHTS", interactive=False, placeholder="AI is preparing to analyze...", lines=5)
-                    
-                with gr.Column(elem_classes="sidebar-card"):
-                    gr.Markdown("### 📜 Performance Audit")
-                    history_table = gr.Dataframe(
-                        headers=["TS", "Lvl", "Score"], 
-                        datatype=["str", "str", "number"], 
-                        value=[], 
-                        interactive=False
-                    )
-                    score_plot = gr.LinePlot(
-                        x="Run", y="Score", title="Reward Analytics", tooltip=["Run", "Score", "Lvl"]
-                    )
-
-                with gr.Column(elem_classes="sidebar-card"):
-                    gr.Markdown("### 🔍 KB Search")
-                    search_query = gr.Textbox(placeholder="Query...", label="INTEL SEARCH")
-                    search_btn = gr.Button("Search", variant="secondary")
-                    kb_box = gr.Markdown("*Research results...*", elem_classes="kb-module")
-
-                with gr.Column(elem_classes="sidebar-card"):
-                    gr.Markdown("### 🗨️ Live Support Simulator")
-                    support_chat = gr.Chatbot(label="Active Agent Chat", height=200)
-                    support_msg = gr.Textbox(placeholder="Ask for manager...", show_label=False)
-
-            with gr.TabItem("📊 Advanced Analytics & Reporting"):
+            with gr.TabItem("📊 Power Analytics"):
                 with gr.Column(elem_classes="main-card"):
-                    gr.Markdown("## 📈 Global Episode Cycles & Reasoning Matrix")
-                    gr.HTML("<div style='padding: 24px; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; text-align: center;'><h3 style='color: #2da44e;'>System Status: GREEN</h3><p>AI reasoning agent has achieved steady-state convergence. No anomalous hallucinations or boundary violations detected in the last rolling cycles.</p></div>")
-                    
+                    gr.Markdown("## 📈 Performance & Cycle Analysis")
                     with gr.Row():
-                        performance_bar = gr.BarPlot(
-                            x="Lvl", y="Score", title="Performance by Tier", tooltip=["Lvl", "Score"], 
-                            y_lim=[0, 1], height=300
-                        )
-                    
-                    gr.HTML("<hr style='border: 0; border-top: 1px solid #ebeef0; margin: 20px 0;'>")
-                    gr.Markdown("### 🖨️ Extracted Compliance Reports")
+                        history_table = gr.Dataframe(headers=["TS", "Lvl", "Score"], datatype=["str", "str", "number"], interactive=False)
+                        score_plot = gr.LinePlot(x="Run", y="Score", title="Reward Trend")
                     with gr.Row():
-                        gr.Button("📥 Export SOC-2 Audit CSV")
-                        gr.Button("📥 Download RL Training JSONL")
-                        gr.Button("📥 Generative Insights PDF")
+                        performance_bar = gr.BarPlot(x="Lvl", y="Score", title="Success Rate by Tier", y_lim=[0, 1])
+                        with gr.Column():
+                            gr.Markdown("### 🖨️ Reports")
+                            gr.Button("📥 Export Compliance PDF", variant="secondary")
+                            gr.Button("📥 Download Training JSONL", variant="secondary")
 
-            with gr.TabItem("👤 AI Interactive Sandbox (Dummy Customer)"):
-                with gr.Column(elem_classes="main-card"):
-                    gr.Markdown("## 🧪 Custom Scenario Testing")
-                    gr.Markdown("Inject completely fabricated tickets to test the edge limits of the LLM's classification logic outside of the rigid OpenEnv strict dataset. (Metrics disabled while sandboxed).")
-                    dummy_input = gr.Textbox(label="Message as Customer", placeholder="Hey there, I just spilled coffee on the server rack...", lines=4)
-                    dummy_btn = gr.Button("Inject Ticket", variant="primary")
-                    dummy_output = gr.Textbox(label="Agent Reasoning Preview & Simulated Action", interactive=False, lines=6)
+            with gr.TabItem("🧪 AI Playground"):
+                with gr.Row():
+                    with gr.Column(scale=2, elem_classes="main-card"):
+                        gr.Markdown("## 👤 Customer Sandbox")
+                        dummy_input = gr.Textbox(label="Inject Dummy Message", placeholder="Hello...", lines=4)
+                        dummy_btn = gr.Button("Simulate Inference", variant="primary")
+                        dummy_output = gr.Textbox(label="AI Strategy", interactive=False, lines=6)
+                    with gr.Column(scale=1, elem_classes="sidebar-card"):
+                        gr.Markdown("### 🗨️ Chat Support")
+                        support_chat = gr.Chatbot(label="Agent Chat", height=400)
+                        support_msg = gr.Textbox(placeholder="Type message...", show_label=False)
 
         # 3. State & Logic
         log_state = gr.State([])
@@ -354,7 +320,6 @@ def create_ui():
                 suggestion_box: suggestion,
                 reasoning_log: thought,
                 ai_latency: f"{random.randint(400, 1200)}ms",
-                ai_confidence: f"{random.uniform(0.85, 0.99):.2f}",
                 ai_tokens: f"{random.randint(150, 450)}",
                 step_gauge: f"Quota: {steps_left}/10 Actions Left",
                 reward_disp: new_total,
@@ -502,7 +467,7 @@ def create_ui():
                     break
 
         # 5. Wire Uplinks
-        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_confidence, ai_tokens]
+        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot, sentiment_badge, sla_timer, tier_badge, performance_bar, ai_latency, ai_tokens]
         
         # Add the Auto-Triage Button to the UI column (sidebar)
         with gr.Column(scale=1): 

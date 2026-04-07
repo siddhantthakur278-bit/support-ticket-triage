@@ -372,6 +372,20 @@ def create_ui():
             obs.done = True
             return update_ui(obs, env, logs, total, history)
 
+        def on_tournament(env):
+            if env is None or not hasattr(env, 'current_ticket'): 
+                return "⚠️ Initialization Required: Please start a session in the Helpdesk tab first to provide a test subject for the battle.", "⚠️ STANDBY: Waiting for live ticket data..."
+            from openai import OpenAI
+            client = OpenAI(base_url=os.getenv("API_BASE_URL", "https://api.groq.com/openai/v1"), api_key=os.getenv("HF_TOKEN"))
+            model = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
+            prompt = f"Ticket: {env.current_ticket}\nTask: Analyze this and provide a triage strategy."
+            try:
+                res_a = client.chat.completions.create(model=model, messages=[{"role": "system", "content": "You are a standard support bot. Analyze and triage."}, {"role": "user", "content": prompt}], max_tokens=250)
+                res_b = client.chat.completions.create(model=model, messages=[{"role": "system", "content": "You are an Elite Triage Specialist. Use Chain of Thought. Identify risks."}, {"role": "user", "content": prompt}], max_tokens=400)
+                return res_a.choices[0].message.content, res_b.choices[0].message.content
+            except Exception as e:
+                return f"❌ Battle Error: {str(e)}", "❌ Uplink Timeout."
+
         def on_voice(audio_path):
             if not audio_path: return gr.update()
             try:
@@ -406,6 +420,7 @@ def create_ui():
         audio_input.change(on_voice, inputs=[audio_input], outputs=[ticket_box, sys_msg])
         export_pdf_btn.click(lambda: on_export("PDF"), outputs=[download_area])
         export_json_btn.click(lambda: on_export("JSONL"), outputs=[download_area])
+        tournament_btn.click(on_tournament, inputs=[env_state], outputs=[model_a_out, model_b_out])
         tune_btn.click(lambda: "✅ Hyperparameters synchronized.", None, tune_status)
         login_btn.click(lambda k: "🔓 AUTHORIZATION GRANTED." if k=="admin" else "❌ DENIED.", inputs=[login_user], outputs=[login_msg])
         

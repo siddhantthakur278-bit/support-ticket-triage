@@ -196,6 +196,9 @@ def create_ui():
                         value=[], 
                         interactive=False
                     )
+                    score_plot = gr.LinePlot(
+                        x="Run", y="Score", title="Reward Analytics", tooltip=["Run", "Score", "Lvl"], width=300, height=200
+                    )
 
                 with gr.Column(elem_classes="sidebar-card"):
                     gr.Markdown("### 🔍 KB Search")
@@ -252,6 +255,17 @@ def create_ui():
                 ts = datetime.now().strftime("%H:%M:%S")
                 task_lv = env.task_level.upper() if env and env.task_level else "N/A"
                 new_history = [[ts, task_lv, round(new_total, 3)]] + history
+            
+            import pandas as pd
+            if new_history:
+                rev = new_history[::-1]
+                plot_df = pd.DataFrame({
+                    "Run": [str(i+1) for i in range(len(rev))],
+                    "Score": [row[2] for row in rev],
+                    "Lvl": [row[1] for row in rev]
+                })
+            else:
+                plot_df = pd.DataFrame(columns=["Run", "Score", "Lvl"])
 
             return {
                 ticket_box: obs.current_ticket,
@@ -263,6 +277,7 @@ def create_ui():
                 sys_msg: f"**Status:** {obs.system_message}",
                 total_reward: new_total,
                 history_table: new_history,
+                score_plot: plot_df,
                 history_state: new_history,
                 team_sel: obs.ticket_team if obs.ticket_team and obs.ticket_team != "unassigned" else None,
                 prio_sel: obs.ticket_priority if obs.ticket_priority and obs.ticket_priority != "unassigned" else None,

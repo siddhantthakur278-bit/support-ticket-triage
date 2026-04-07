@@ -417,7 +417,7 @@ def create_ui():
                     break
 
         # 5. Wire Uplinks
-        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query]
+        ALL_OUTPUTS = [ticket_box, kb_box, suggestion_box, reasoning_log, step_gauge, reward_disp, sys_msg, total_reward, history_table, history_state, team_sel, prio_sel, stat_sel, reply_text, search_query, score_plot]
         
         # Add the Auto-Triage Button to the UI column (sidebar)
         with gr.Column(scale=1): 

@@ -144,12 +144,17 @@ def create_ui():
                                 ai_latency = gr.Label(value="N/A", label="LATENCY")
                                 ai_tokens = gr.Label(value="N/A", label="THROUGHPUT")
                             reasoning_log = gr.Textbox(label="AGENTIC_REASONING", interactive=False, lines=3, elem_classes="mono-log")
+                            sys_msg = gr.Markdown("**SITUATION_STATUS:** Neural Link Standby.")
                         
                         with gr.Column(elem_classes="sidebar-card"):
                             gr.Markdown("### 🔍 Threat Intel Database")
                             search_query = gr.Textbox(placeholder="Deep search intel...", show_label=False)
                             search_btn = gr.Button("RETRIEVE PLAYBOOK", variant="secondary")
                             kb_box = gr.Markdown("*Intel standby.*", elem_classes="kb-module")
+                        
+                        with gr.Column(elem_classes="sidebar-card"):
+                            gr.Markdown("### 📍 Distribution")
+                            policy_plot = gr.BarPlot(x="Action", y="Confidence", title="Policy Distribution", height=150)
                             
                         with gr.Column(elem_classes="sidebar-card"):
                             gr.Markdown("### 📊 Operational Vitals")

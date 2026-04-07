@@ -2,7 +2,7 @@
 title: SentinelSOC Autonomous Defense (Meta PyTorch OpenEnv Hackathon)
 emoji: 🛡️
 colorFrom: red
-colorTo: black
+colorTo: gray
 sdk: docker
 pinned: true
 tags:

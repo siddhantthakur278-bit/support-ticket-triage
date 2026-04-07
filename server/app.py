@@ -242,7 +242,14 @@ def create_ui():
                 entropy_plot: pd.DataFrame({"Step": range(20), "Entropy": [random.random() for _ in range(20)]}),
                 trajectory_plot: pd.DataFrame({"x": [random.random() for _ in range(10)], "y": [random.random() for _ in range(10)], "reward": [random.random() for _ in range(10)]}),
                 history_state: new_history, total_reward: new_total,
-                trace_output: f'{{ "status": "{obs.system_message}", "reward": {reward}, "done": {obs.done} }}',
+                trace_output: json.dumps({
+                    "event": obs.system_message,
+                    "reward": reward,
+                    "done": obs.done,
+                    "step": getattr(obs, 'step_count', 0),
+                    "routing": getattr(obs, 'ticket_team', 'unassigned'),
+                    "potential": f"{int(random.random()*100)}%" # Simulated coverage
+                }, indent=2),
                 sentiment_badge: "NEUTRAL 😐", 
                 sla_timer: "24h 00m", 
                 tier_badge: "Standard",

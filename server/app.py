@@ -334,6 +334,7 @@ def create_ui():
                 total_reward: new_total,
                 map_step_1: colors[0], map_step_2: colors[1],
                 map_step_3: colors[2], map_step_4: colors[3],
+                hint_input: gr.update(),  # no-op; keeps hint_input in ALL_OUT coverage
             }
 
         # =================================================================
@@ -558,7 +559,6 @@ def create_ui():
                         history = new_history
 
                     result = build_ui_dict(obs, env, running_total, history, reasoning=thinking)
-                    result[hint_input] = ""  # clear hint after first use
                     yield result
 
                     if obs.done:
@@ -597,6 +597,7 @@ def create_ui():
             policy_plot, loss_plot, entropy_plot,
             history_state, total_reward,
             map_step_1, map_step_2, map_step_3, map_step_4,
+            hint_input,
         ]
 
         # =================================================================

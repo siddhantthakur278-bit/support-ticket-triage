@@ -605,10 +605,25 @@ def create_ui():
             new_history = h + [{"role": "user", "content": m}, {"role": "assistant", "content": response}]
             return "", new_history
 
+        def on_voice(audio_path):
+            if not audio_path: return gr.update()
+            try:
+                from openai import OpenAI
+                client = OpenAI(base_url=os.getenv("API_BASE_URL", "https://api.groq.com/openai/v1"), api_key=os.getenv("HF_TOKEN"))
+                with open(audio_path, "rb") as f:
+                    transcript = client.audio.transcriptions.create(model="whisper-large-v3", file=f)
+                return {ticket_box: transcript.text, sys_msg: "🎤 VOICE_UPLINK_SYNC: Transcription injected to buffer."}
+            except Exception as e:
+                return {sys_msg: f"❌ TRANSCRIPTION_ERROR: {str(e)}"}
+
+        def on_translate(text):
+            if not text: return gr.update()
+            return f"EN_BRIDGE: [PROCESSED] {text}"
+
         support_msg.submit(on_support_msg, inputs=[support_msg, support_chat], outputs=[support_msg, support_chat], scroll_to_output=True)
 
-        audio_input.change(lambda: "VOICE UPLINK: Transcript syncing to buffer...", None, sys_msg)
-        translate_btn.click(lambda: "LOCALIZATION: Bridging ticket description to English primary...", None, sys_msg)
+        audio_input.change(on_voice, inputs=[audio_input], outputs=[ticket_box, sys_msg])
+        translate_btn.click(on_translate, inputs=[ticket_box], outputs=[ticket_box])
         turbo_btn.change(lambda v: f"🚀 SYSTEM STATE: {'TURBO' if v else 'PRECISION_REASONING'} MODE" , inputs=[turbo_btn], outputs=[sys_msg])
 
         macro_refund.click(lambda: "I have initiated a full refund for your recent transaction. It will appear on your statement in 3-5 business days.", None, reply_text)

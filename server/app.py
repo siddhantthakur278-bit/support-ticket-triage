@@ -269,7 +269,8 @@ def create_ui():
                                     "claude-3-5-sonnet"
                                 ], 
                                 label="TARGET_LLM_PROTOCOL", 
-                                value=os.getenv("MODEL_NAME", "gpt-4o-mini")
+                                value=os.getenv("MODEL_NAME", "gpt-4o-mini"),
+                                allow_custom_value=True
                             )
                             live_url = gr.Textbox(
                                 label="UPLINK_ENDPOINT (API_BASE_URL)",

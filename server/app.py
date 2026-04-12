@@ -263,19 +263,20 @@ def create_ui():
                         with gr.Column():
                             live_model = gr.Dropdown(
                                 [
-                                    "gpt-4o", "gpt-4o-mini", 
+                                    "gpt-4o", "gpt-4o-mini", "gpt-4.1-mini",
                                     "meta-llama/Llama-3.3-70B-Instruct", 
                                     "Qwen/Qwen2.5-72B-Instruct",
                                     "claude-3-5-sonnet"
                                 ], 
-                                label="TARGET_LLM_PROTOCOL", value="gpt-4o-mini"
+                                label="TARGET_LLM_PROTOCOL", 
+                                value=os.getenv("MODEL_NAME", "gpt-4o-mini")
                             )
                             live_url = gr.Textbox(
                                 label="UPLINK_ENDPOINT (API_BASE_URL)",
                                 value=os.getenv("API_BASE_URL", "https://api.openai.com/v1")
                             )
                             live_temp = gr.Slider(0.0, 1.0, value=0.5, step=0.1, label="CREATIVE_ENTROPY (TEMP)")
-                            live_max_steps = gr.Slider(5, 20, value=10, step=1, label="MAX_TACTICAL_CYCLES")
+                            live_max_steps = gr.Slider(5, 20, value=int(os.getenv("MAX_STEPS", "10")), step=1, label="MAX_TACTICAL_CYCLES")
                         with gr.Column():
                             live_prompt = gr.Textbox(
                                 label="DIRECTOR'S_DIRECTIVE (SYSTEM_PROMPT)",
@@ -531,7 +532,7 @@ def create_ui():
 
             llm = OpenAI(
                 base_url=settings_url if settings_url else os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
-                api_key=os.getenv("HF_TOKEN", "")
+                api_key=os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN", "")
             )
             # Use LIVE config from Defense Matrix
             model = settings_model

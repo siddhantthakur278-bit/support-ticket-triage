@@ -545,16 +545,17 @@ def create_ui():
                 persona = "compliance-focused auditor" if "Guardian" in proto else "autonomous SOC analyst"
                 system_prompt = (
                     f"You are SentinelAI, an elite {persona}. Output ONLY a valid JSON object.\n"
+                    "GOAL: Investigate the ticket, MITIGATE it to update metadata (team, priority, status), REPORT it to draft a response, and SUBMIT when finished.\n"
                     "SCHEMA:\n"
                     "{\n"
                     "  \"thinking\": \"your tactical reasoning\",\n"
                     "  \"action\": {\n"
                     "    \"action_type\": \"investigate\" | \"mitigate\" | \"report\" | \"submit\",\n"
-                    "    \"search_query\": \"threatintel\",\n"
-                    "    \"team\": \"security\"|\"network\"|\"billing\"|\"hr\"|\"it_support\",\n"
+                    "    \"search_query\": \"knowledge base query\",\n"
+                    "    \"team\": \"security\"|\"network\"|\"billing\"|\"hr\"|\"it_support\"|\"product\"|\"hardware\",\n"
                     "    \"priority\": \"low\"|\"medium\"|\"high\"|\"critical\"|\"urgent\",\n"
                     "    \"status\": \"open\"|\"in_progress\"|\"resolved\"|\"escalated\",\n"
-                    "    \"reply_text\": \"incident report content\"\n"
+                    "    \"reply_text\": \"detailed incident report (required for report action)\"\n"
                     "  }\n"
                     "}"
                 )
@@ -576,14 +577,22 @@ def create_ui():
             yield {sys_msg: f"📡 **UPLINK: '{proto}' Protocol Synchronized. Beginning autonomous triage...**"}
 
             for step_i in range(int(settings_max_steps)):
-                state_obs = env._get_observation(f"Step {step_i + 1}: Analyzing threat vector...")
+                state_obs = env._get_observation(f"Step {step_i + 1}: Analyzing threat matrix...")
+                
+                # Truncate KB results for SPEED and token efficiency
+                kb_preview = (state_obs.kb_search_results or "N/A")[:500]
+                if len(state_obs.kb_search_results or "") > 500:
+                    kb_preview += "... [TRUNCATED for efficiency]"
+
                 state_snapshot = {
                     "current_ticket": state_obs.current_ticket,
-                    "kb_search_results": state_obs.kb_search_results or "Not yet retrieved.",
-                    "ticket_team": state_obs.ticket_team,
-                    "ticket_priority": state_obs.ticket_priority,
-                    "ticket_status": state_obs.ticket_status,
-                    "draft_reply": state_obs.draft_reply or "Not yet drafted.",
+                    "kb_search_results": kb_preview,
+                    "incident_metadata": {
+                        "team": state_obs.ticket_team,
+                        "priority": state_obs.ticket_priority,
+                        "status": state_obs.ticket_status,
+                        "report_draft": state_obs.draft_reply[:100] if state_obs.draft_reply else "Empty"
+                    },
                     "actions_taken": [a["action"] for a in local_audit],
                 }
 
@@ -623,23 +632,22 @@ def create_ui():
                     elif "submit" in raw_at or "close" in raw_at or "finish" in raw_at: at = "submit"
                     else: at = "investigate"
                     
-                    team_val = action_data.get("team")
-                    prio_val = action_data.get("priority")
-                    stat_val = action_data.get("status")
-                    reply_val = action_data.get("reply_text")
+                    # CASE-INSENSITIVE NORMALIZATION
+                    def norm(v): return str(v).lower().strip() if v else None
 
-                    # Fallbacks for naming variations
-                    if not team_val: team_val = action_data.get("team_unit", "security")
-                    if not prio_val: prio_val = action_data.get("severity", "medium")
-                    if not stat_val: stat_val = action_data.get("incident_status", "in_progress")
-                    
-                    if team_val not in VALID_TEAMS: team_val = "security"
-                    if prio_val not in VALID_PRIORITIES: prio_val = "medium"
-                    if stat_val not in VALID_STATUSES: stat_val = "in_progress"
+                    team_val = norm(action_data.get("team") or action_data.get("team_unit"))
+                    prio_val = norm(action_data.get("priority") or action_data.get("severity"))
+                    stat_val = norm(action_data.get("status") or action_data.get("incident_status"))
+                    reply_val = action_data.get("reply_text") or action_data.get("report")
+
+                    # Validation with fallbacks
+                    if team_val not in VALID_TEAMS: team_val = None
+                    if prio_val not in VALID_PRIORITIES: prio_val = None
+                    if stat_val not in VALID_STATUSES: stat_val = None
 
                     action_obj = SentinelAction(
                         action_type=at,
-                        search_query=str(action_data.get("search_query", "threat pattern analysis")),
+                        search_query=str(action_data.get("search_query", "pattern search")),
                         reply_text=reply_val or "",
                         team=team_val,
                         priority=prio_val,

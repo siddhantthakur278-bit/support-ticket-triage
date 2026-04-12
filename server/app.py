@@ -145,9 +145,9 @@ def create_ui():
 
                             gr.Markdown("### 📍 Response Matrix")
                             with gr.Row():
-                                team_sel = gr.Dropdown(VALID_TEAMS, label="DEPLOYMENT_UNIT", value="unassigned", interactive=True)
-                                prio_sel = gr.Dropdown(VALID_PRIORITIES, label="SEVERITY_LEVEL", value="unassigned", interactive=True)
-                                stat_sel = gr.Dropdown(VALID_STATUSES, label="INCIDENT_STATUS", value="open", interactive=True)
+                                team_sel = gr.Dropdown(VALID_TEAMS, label="DEPLOYMENT_UNIT (Team)", value="unassigned", interactive=True)
+                                prio_sel = gr.Dropdown(VALID_PRIORITIES, label="SEVERITY_LEVEL (Priority)", value="unassigned", interactive=True)
+                                stat_sel = gr.Dropdown(VALID_STATUSES, label="INCIDENT_STATUS (State)", value="open", interactive=True)
                             triage_btn = gr.Button("⚙️ EXECUTE POLICY UPDATE", variant="secondary")
 
                         with gr.Column(elem_classes="main-card"):
@@ -680,10 +680,30 @@ def create_ui():
                     elif any(x in raw_at for x in ["submit", "close", "finish", "done", "complete"]): at = "submit"
                     else: at = "investigate"
                     
-                    # 2. NORMALIZE FIELDS (Handle diverse AI naming)
+                    # 2. NORMALIZE FIELDS (Handle diverse AI naming + Fuzzy search)
+                    raw_text = str(data).lower()
+                    
                     team_val = norm(action_data.get("team") or action_data.get("unit") or action_data.get("deployment_unit"))
+                    if not team_val:
+                        for t in VALID_TEAMS:
+                            if t != "unassigned" and t in raw_text:
+                                team_val = t
+                                break
+                    
                     prio_val = norm(action_data.get("priority") or action_data.get("severity") or action_data.get("threat_level"))
+                    if not prio_val:
+                        for p in VALID_PRIORITIES:
+                            if p != "unassigned" and p in raw_text:
+                                prio_val = p
+                                break
+
                     stat_val = norm(action_data.get("status") or action_data.get("incident_status") or action_data.get("state"))
+                    if not stat_val:
+                        for s in VALID_STATUSES:
+                            if s in raw_text:
+                                stat_val = s
+                                break
+                    
                     reply_val = action_data.get("reply_text") or action_data.get("report") or action_data.get("mitigation_log") or action_data.get("draft")
 
                     # Validation with fallbacks

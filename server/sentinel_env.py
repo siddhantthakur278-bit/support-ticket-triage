@@ -145,6 +145,13 @@ class SentinelSOCEnvironment(Environment):
             system_message = "MAX OPERATIONS REACHED. Finalizing incident report."
 
         if not done:
+            # Universal Metadata Synchronization
+            if self.task_level and action.action_type not in ["start_mission", "start_task"]:
+                if action.priority: self._ticket_priority = action.priority
+                if action.team: self._ticket_team = action.team
+                if action.status: self._ticket_status = action.status
+                if action.reply_text: self._draft_reply = action.reply_text
+
             # SOC Action: Initiate Investigation / Mission
             if action.action_type in ["start_mission", "start_task"]:
                 # support both names for compatibility

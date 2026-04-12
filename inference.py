@@ -114,49 +114,59 @@ async def run_mission(client: OpenAI, url: str, level: str) -> None:
 
     try:
         await env.reset()
-        res = await env.step(SentinelAction(action_type="start_mission", task_level=level))
-        obs = res.observation
-        history = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-        for i in range(1, MAX_STEPS + 1):
-            steps = i
-            prompt = (
-                f"INCIDENT: {obs.current_ticket}\n"
-                f"INTEL: {obs.kb_search_results or '(none)'}\n"
-                f"STATUS: {obs.ticket_status} | SEVERITY: {obs.ticket_priority} | UNIT: {obs.ticket_team}\n"
-                f"REPORT: {obs.draft_reply or '(none)'}"
-            )
-            history.append({"role": "user", "content": prompt})
-
-            try:
-                comp = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=history,
-                    temperature=0.0,
-                    response_format={"type": "json_object"}
-                )
-                raw = comp.choices[0].message.content or "{}"
-                rj = json.loads(raw)
-                thinking = rj.get('thinking', 'Analyzing vectors...').replace('\n', ' ').replace('\r', '')
-                print(f"[THINKING] {thinking}", file=__import__('sys').stderr, flush=True)
-                act = _safe_action(rj)
-                history.append({"role": "assistant", "content": raw})
-            except Exception as e:
-                # print(f"[THINKING] LLM error: {e}", flush=True)
-                act = SentinelAction(action_type="investigate", search_query="logs")
-
-            res = await env.step(act)
+        # Start mission — Step 1
+        init_act = SentinelAction(action_type="start_mission", task_level=level)
+        res = await env.step(init_act)
+        
+        steps = 1
+        rewards.append(res.reward)
+        log_step(steps, "start_mission", res.reward, res.done, getattr(res, "last_action_error", None))
+        
+        if res.done:
             obs = res.observation
-            rewards.append(res.reward)
-            
-            # Capture error from environment if available
-            last_action_error = getattr(res, "last_action_error", None)
-            
-            log_step(i, act.model_dump_json(), res.reward, res.done, last_action_error)
+            f_score = _extract_final_score(obs.system_message) or (sum(rewards)/len(rewards) if rewards else 0.01)
+        else:
+            obs = res.observation
+            history = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-            if res.done:
-                f_score = _extract_final_score(obs.system_message) or (sum(rewards)/len(rewards) if rewards else 0.01)
-                break
+            for i in range(2, MAX_STEPS + 1):
+                steps = i
+                prompt = (
+                    f"INCIDENT: {obs.current_ticket}\n"
+                    f"INTEL: {obs.kb_search_results or '(none)'}\n"
+                    f"STATUS: {obs.ticket_status} | SEVERITY: {obs.ticket_priority} | UNIT: {obs.ticket_team}\n"
+                    f"REPORT: {obs.draft_reply or '(none)'}"
+                )
+                history.append({"role": "user", "content": prompt})
+
+                try:
+                    comp = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=history,
+                        temperature=0.0,
+                        response_format={"type": "json_object"}
+                    )
+                    raw = comp.choices[0].message.content or "{}"
+                    rj = json.loads(raw)
+                    thinking = rj.get('thinking', 'Analyzing vectors...').replace('\n', ' ').replace('\r', '')
+                    print(f"[THINKING] {thinking}", file=__import__('sys').stderr, flush=True)
+                    act = _safe_action(rj)
+                    history.append({"role": "assistant", "content": raw})
+                except Exception as e:
+                    act = SentinelAction(action_type="investigate", search_query="logs")
+
+                res = await env.step(act)
+                obs = res.observation
+                rewards.append(res.reward)
+                
+                # Capture error from environment if available
+                last_action_error = getattr(res, "last_action_error", None)
+                
+                log_step(i, act.model_dump_json(), res.reward, res.done, last_action_error)
+
+                if res.done:
+                    f_score = _extract_final_score(obs.system_message) or (sum(rewards)/len(rewards) if rewards else 0.01)
+                    break
 
         success = f_score >= SUCCESS_THRESHOLD
 

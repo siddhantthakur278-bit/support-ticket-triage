@@ -33,7 +33,7 @@ base_app = create_app(
 )
 
 # Valid values matching tickets.json & models.py
-VALID_TEAMS = ["unassigned", "security", "billing", "network", "product", "it_support", "hr"]
+VALID_TEAMS = ["unassigned", "security", "billing", "network", "product", "it_support", "hr", "hardware"]
 VALID_PRIORITIES = ["unassigned", "medium", "high", "critical", "urgent"]
 VALID_STATUSES = ["open", "in_progress", "resolved", "escalated"]
 
@@ -531,9 +531,22 @@ def create_ui():
 
             # persona logic remains as fallback...
             if not system_prompt_overide or len(system_prompt_overide) < 10:
-                if "Guardian" in proto: persona = "compliance-focused auditor"
-                else: persona = "autonomous SOC analyst"
-                system_prompt = f"You are SentinelAI, a {persona}. Output ONLY JSON."
+                persona = "compliance-focused auditor" if "Guardian" in proto else "autonomous SOC analyst"
+                system_prompt = (
+                    f"You are SentinelAI, an elite {persona}. Output ONLY a valid JSON object.\n"
+                    "SCHEMA:\n"
+                    "{\n"
+                    "  \"thinking\": \"your tactical reasoning\",\n"
+                    "  \"action\": {\n"
+                    "    \"action_type\": \"investigate\" | \"mitigate\" | \"report\" | \"submit\",\n"
+                    "    \"search_query\": \"threatintel\",\n"
+                    "    \"team\": \"security\"|\"network\"|\"billing\"|\"hr\"|\"it_support\",\n"
+                    "    \"priority\": \"low\"|\"medium\"|\"high\"|\"critical\"|\"urgent\",\n"
+                    "    \"status\": \"open\"|\"in_progress\"|\"resolved\"|\"escalated\",\n"
+                    "    \"reply_text\": \"incident report content\"\n"
+                    "  }\n"
+                    "}"
+                )
             else:
                 system_prompt = system_prompt_overide
 
@@ -570,75 +583,74 @@ def create_ui():
                         max_tokens=900,
                     )
                     raw = res.choices[0].message.content or "{}"
-                    # Strip accidental markdown fences
-                    if "```" in raw:
-                        raw = raw.split("```")[1].replace("json", "").strip()
-
+                    
+                    # Robust JSON Extraction
+                    import re
+                    json_match = re.search(r'\{.*\}', raw, re.DOTALL)
+                    if json_match:
+                        raw = json_match.group(0)
+                        
                     data = json.loads(raw)
 
-                    thinking = data.get("thinking", f"[{proto}] Executing tactical maneuver...")
+                    thinking = data.get("thinking", f"[{proto}] Tactical maneuver in progress...")
                     messages.append({"role": "assistant", "content": raw})
 
-                    # Normalize action_type
-                    raw_at = str(data.get("action_type", "investigate")).lower()
-                    if "invest" in raw_at or "search" in raw_at:
-                        at = "investigate"
-                    elif "mitig" in raw_at or "updat" in raw_at or "route" in raw_at:
-                        at = "mitigate"
-                    elif "repor" in raw_at or "draft" in raw_at or "reply" in raw_at:
-                        at = "report"
-                    elif "submit" in raw_at or "close" in raw_at or "finish" in raw_at:
-                        at = "submit"
-                    else:
-                        at = "investigate"
+                    # Normalize action_type and parameters
+                    action_data = data.get("action", data)
+                    raw_at = str(action_data.get("action_type", "investigate")).lower()
+                    if "invest" in raw_at or "search" in raw_at: at = "investigate"
+                    elif "mitig" in raw_at or "updat" in raw_at or "route" in raw_at: at = "mitigate"
+                    elif "repor" in raw_at or "draft" in raw_at or "reply" in raw_at: at = "report"
+                    elif "submit" in raw_at or "close" in raw_at or "finish" in raw_at: at = "submit"
+                    else: at = "investigate"
+                    
+                    team_val = action_data.get("team")
+                    prio_val = action_data.get("priority")
+                    stat_val = action_data.get("status")
+                    reply_val = action_data.get("reply_text")
 
-                    # Build action
-                    team_val = data.get("team", "security")
-                    prio_val = data.get("priority", "medium")
-                    stat_val = data.get("status", "in_progress")
-
-                    # Validate enums strictly
-                    if team_val not in [t for t in VALID_TEAMS if t != "unassigned"]:
-                        team_val = "security"
-                    if prio_val not in [p for p in VALID_PRIORITIES if p != "unassigned"]:
-                        prio_val = "medium"
-                    if stat_val not in VALID_STATUSES:
-                        stat_val = "in_progress"
-
-                    reply_val = str(data.get("reply_text", data.get("report", data.get("draft", ""))))
+                    # Fallbacks for naming variations
+                    if not team_val: team_val = action_data.get("team_unit", "security")
+                    if not prio_val: prio_val = action_data.get("severity", "medium")
+                    if not stat_val: stat_val = action_data.get("incident_status", "in_progress")
+                    
+                    if team_val not in VALID_TEAMS: team_val = "security"
+                    if prio_val not in VALID_PRIORITIES: prio_val = "medium"
+                    if stat_val not in VALID_STATUSES: stat_val = "in_progress"
 
                     action_obj = SentinelAction(
                         action_type=at,
-                        search_query=str(data.get("search_query", "threat pattern analysis")),
-                        reply_text=reply_val,
+                        search_query=str(action_data.get("search_query", "threat pattern analysis")),
+                        reply_text=reply_val or "",
                         team=team_val,
                         priority=prio_val,
                         status=stat_val,
                     )
 
                     obs = env.step(action_obj)
-                    done_actions.append(at)
-
+                    final_score = float(max(0.01, min(0.99, obs.reward)))
+                    
                     if obs.done:
-                        # Score = done-step reward only, strictly in (0, 1)
-                        final_score = float(max(0.01, min(0.99, obs.reward)))
                         mission_num = len(history) + 1
-                        new_history = [[
-                            f"Mission #{mission_num}",
-                            (env.task_level or "?").upper(),
-                            round(final_score, 4)
-                        ]] + history
-                        history = new_history
+                        history = [[f"Mission #{mission_num}", (env.task_level or "?").upper(), round(final_score, 4)]] + history
                         running_total = final_score
 
-                    local_audit.append({"step": step_i+1, "thinking": thinking, "action": at})
+                    local_audit.append({
+                        "step": step_i + 1, 
+                        "thinking": thinking, 
+                        "action": f"{at}({team_val}/{prio_val})"
+                    })
+                    
                     result = build_ui_dict(obs, env, running_total, history, reasoning=thinking, audit_log=local_audit)
                     yield result
 
                     if obs.done:
+                        yield {sys_msg: f"🎯 **MISSION SUCCESS:** Final Score {final_score:.4f}/1.0000"}
                         break
 
                 except Exception as e:
+                    import sys
+                    print(f"[ERROR] AI Engine Crash: {e}\nRaw Output: {raw}", file=sys.stderr)
                     yield {sys_msg: f"❌ **AUTO-TRIAGE ERROR (step {step_i + 1}):** {str(e)}"}
                     break
 

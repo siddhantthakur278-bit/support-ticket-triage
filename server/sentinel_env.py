@@ -45,7 +45,7 @@ class SentinelSOCEnvironment(Environment):
         self.reset_environment_state()
         return self._get_observation("SOC Terminal Initialized. Ready for intake.")
 
-    def _get_observation(self, system_message: str, done: bool = False, reward: float = 0.0) -> SentinelObservation:
+    def _get_observation(self, system_message: str, done: bool = False, reward: float = 0.01) -> SentinelObservation:
         return SentinelObservation(
             current_ticket=self._current_ticket,
             kb_search_results=self._kb_search_results,
@@ -244,15 +244,18 @@ class SentinelSOCEnvironment(Environment):
                 system_message = f"UNRECOGNIZED COMMAND: {action.action_type}"
 
         current_score = self._compute_potential()  # always in [0.01, 0.99]
-        # Intermediate steps get a tiny reward to keep the agent exploring.
-        # The real score is awarded only at submission (done=True).
-        STEP_EPS = 0.001
+        # Intermediate steps get a small reward to keep the agent exploring.
+        # STEP_EPS must be >= 0.005 so that :.2f formatting gives '0.01', not '0.00'
+        STEP_EPS = 0.01
         if done:
             # Final reward IS the quality score — strictly between 0 and 1.
             reward = float(max(0.01, min(0.99, current_score)))
             system_message = f"Task submitted. Final score: {reward:.4f}/1.00"
         else:
-            reward = STEP_EPS  # tiny signal per intermediate step (0.001 << 1)
+            reward = STEP_EPS
+
+        # Universal safety clamp: reward must be strictly in (0, 1) — never 0.0 or 1.0
+        reward = float(max(0.01, min(0.99, reward)))
 
         return self._get_observation(system_message, done=done, reward=reward)
 

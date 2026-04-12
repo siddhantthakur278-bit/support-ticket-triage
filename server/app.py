@@ -730,15 +730,6 @@ def create_ui():
             inputs=[total_reward, history_state, env_state],
             outputs=ALL_OUT
         )
-        analytics_refresh_btn.click(
-            build_leaderboard,
-            inputs=[history_state],
-            outputs=[leaderboard_table, leaderboard_chart, defcon_stats, lb_msg]
-        )
-        translate_btn.click(
-            lambda: {sys_msg: "📡 **UPLINK:** Biometric decryption complete — NO MALICIOUS INTENT DETECTED."},
-            outputs=[sys_msg]
-        )
 
         # =================================================================
         # DYNAMIC LEADERBOARD
@@ -809,6 +800,11 @@ def create_ui():
         )
 
         refresh_lb_btn.click(
+            build_leaderboard,
+            inputs=[history_state],
+            outputs=[leaderboard_table, leaderboard_chart, defcon_stats, lb_msg]
+        )
+        analytics_refresh_btn.click(
             build_leaderboard,
             inputs=[history_state],
             outputs=[leaderboard_table, leaderboard_chart, defcon_stats, lb_msg]

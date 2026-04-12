@@ -2,6 +2,7 @@
 SentinelSOC | Autonomous Cyber-Defense Command Center.
 Premium Uplink: Meta PyTorch Hackathon v2.0
 """
+try:
     import gradio as gr
     from fastapi import FastAPI, Response as FastAPIResponse
     import os

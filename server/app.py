@@ -575,22 +575,21 @@ def create_ui():
                 persona = "compliance-focused auditor" if "Guardian" in proto else "autonomous SOC analyst"
                 system_prompt = (
                     f"You are SentinelAI, an elite {persona}.\n"
-                    "Your mission is to TRIAGE, MITIGATE, and REPORT security incidents.\n\n"
-                    "OPERATIONAL DIRECTIVES:\n"
-                    "1. INVESTIGATE: First, use 'investigate' to search the knowledge base for the threat pattern.\n"
-                    "2. MITIGATE: Once identified, use 'mitigate' to update the incident metadata. You MUST include 'team', 'priority', 'status', and 'reply_text' in the mitigation call.\n"
-                    "3. REPORT: Ensure the 'reply_text' (Mitigation Log) describes your actions and the resolution.\n"
-                    "4. SUBMIT: Only submit when the incident is 'resolved' or 'escalated' and metadata is fully assigned.\n\n"
+                    "Your mission is to TRIAGE and MITIGATE security incidents immediately.\n\n"
+                    "CRITICAL RULES:\n"
+                    "1. DO NOT leave fields 'unassigned'. Even during 'investigate', set 'team' and 'priority' based on your initial scan.\n"
+                    "2. MITIGATION LOG: You MUST provide a 'reply_text' in EVERY step. Describe what you see and what you are doing.\n"
+                    "3. EFFICIENCY: Use 1-2 'investigate' steps max, then 'mitigate' and 'submit'.\n\n"
                     "MANDATORY JSON SCHEMA:\n"
                     "{\n"
-                    "  \"thinking\": \"Tactical reasoning and plan\",\n"
+                    "  \"thinking\": \"Brief tactical reasoning\",\n"
                     "  \"action\": {\n"
                     "    \"action_type\": \"investigate\" | \"mitigate\" | \"report\" | \"submit\",\n"
-                    "    \"search_query\": \"keyword query (for investigate)\",\n"
+                    "    \"search_query\": \"keyword query\", \n"
                     "    \"team\": \"security\"|\"network\"|\"billing\"|\"hr\"|\"it_support\"|\"product\"|\"hardware\",\n"
                     "    \"priority\": \"low\"|\"medium\"|\"high\"|\"critical\"|\"urgent\",\n"
                     "    \"status\": \"open\"|\"in_progress\"|\"resolved\"|\"escalated\",\n"
-                    "    \"reply_text\": \"Required for mitigate/report: detailed incident report and mitigation steps\"\n"
+                    "    \"reply_text\": \"Compulsory: Describe current findings and mitigation steps\"\n"
                     "  }\n"
                     "}"
                 )
@@ -614,10 +613,10 @@ def create_ui():
             for step_i in range(int(settings_max_steps)):
                 state_obs = env._get_observation(f"Step {step_i + 1}: Analyzing threat matrix...")
                 
-                # Truncate KB results for SPEED and token efficiency
-                kb_preview = (state_obs.kb_search_results or "N/A")[:500]
-                if len(state_obs.kb_search_results or "") > 500:
-                    kb_preview += "... [TRUNCATED for efficiency]"
+                # Truncate KB results aggressively for tokens
+                kb_preview = (state_obs.kb_search_results or "N/A")[:300]
+                if len(state_obs.kb_search_results or "") > 300:
+                    kb_preview += "... [TRUNCATED]"
 
                 state_snapshot = {
                     "current_ticket": state_obs.current_ticket,
@@ -633,8 +632,12 @@ def create_ui():
 
                 messages.append({"role": "user", "content": json.dumps(state_snapshot)})
                 
-                # Sliding window: System prompt + last 3 rounds (6 messages)
-                tactical_context = [messages[0]] + messages[-6:]
+                # Tiny delay to avoid rate limits (Groq/HF)
+                import time
+                time.sleep(1.0)
+
+                # Narrow context window: System prompt + last 2 rounds (4 messages)
+                tactical_context = [messages[0]] + messages[-4:]
 
                 raw = "{}"
                 try:

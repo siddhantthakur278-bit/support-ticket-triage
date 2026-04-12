@@ -262,8 +262,17 @@ def create_ui():
                     with gr.Row():
                         with gr.Column():
                             live_model = gr.Dropdown(
-                                ["gpt-4o", "gpt-4o-mini", "llama-3.3-70b-versatile", "claude-3-5-sonnet"], 
+                                [
+                                    "gpt-4o", "gpt-4o-mini", 
+                                    "meta-llama/Llama-3.3-70B-Instruct", 
+                                    "Qwen/Qwen2.5-72B-Instruct",
+                                    "claude-3-5-sonnet"
+                                ], 
                                 label="TARGET_LLM_PROTOCOL", value="gpt-4o-mini"
+                            )
+                            live_url = gr.Textbox(
+                                label="UPLINK_ENDPOINT (API_BASE_URL)",
+                                value=os.getenv("API_BASE_URL", "https://api.openai.com/v1")
                             )
                             live_temp = gr.Slider(0.0, 1.0, value=0.5, step=0.1, label="CREATIVE_ENTROPY (TEMP)")
                             live_max_steps = gr.Slider(5, 20, value=10, step=1, label="MAX_TACTICAL_CYCLES")
@@ -505,7 +514,7 @@ def create_ui():
             return build_ui_dict(obs, env, current_total + obs.reward, history,
                                  reasoning="🛡️ EMERGENCY LOCKDOWN ENGAGED — security/urgent/escalated")
 
-        def on_auto_triage(proto, hint_text, current_total, history, env, settings_model, settings_temp, settings_prompt, settings_max_steps):
+        def on_auto_triage(proto, hint_text, current_total, history, env, settings_model, settings_temp, settings_prompt, settings_max_steps, settings_url):
             """Autonomous AI-driven triage loop — yields updates per step."""
             if not env or not env.task_level:
                 yield build_ui_dict(
@@ -521,7 +530,7 @@ def create_ui():
                 return
 
             llm = OpenAI(
-                base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
+                base_url=settings_url if settings_url else os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
                 api_key=os.getenv("HF_TOKEN", "")
             )
             # Use LIVE config from Defense Matrix
@@ -698,7 +707,7 @@ def create_ui():
         )
         auto_btn.click(
             on_auto_triage,
-            inputs=[agent_proto, hint_input, total_reward, history_state, env_state, live_model, live_temp, live_prompt, live_max_steps],
+            inputs=[agent_proto, hint_input, total_reward, history_state, env_state, live_model, live_temp, live_prompt, live_max_steps, live_url],
             outputs=ALL_OUT
         )
         search_btn.click(
@@ -735,7 +744,7 @@ def create_ui():
         )
         analytics_auto_btn.click(
             on_auto_triage,
-            inputs=[agent_proto, hint_input, total_reward, history_state, env_state, live_model, live_temp, live_prompt, live_max_steps],
+            inputs=[agent_proto, hint_input, total_reward, history_state, env_state, live_model, live_temp, live_prompt, live_max_steps, live_url],
             outputs=ALL_OUT
         )
         analytics_submit_btn.click(

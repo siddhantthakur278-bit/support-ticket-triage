@@ -68,6 +68,8 @@ body, .gradio-container {
 .map-step { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); margin-bottom: 5px; }
 .map-active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
 .gr-button-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)) !important; border: none !important; border-radius: 8px !important; color: white !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 2px; }
+.action-bar { background: rgba(255, 0, 76, 0.05) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; padding: 10px 20px !important; margin-bottom: 25px !important; display: flex; align-items: center; gap: 15px; }
+.action-bar-label { font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--primary); font-weight: bold; letter-spacing: 1px; }
 """
 
 def create_ui():
@@ -186,6 +188,13 @@ def create_ui():
             # ─── TAB 2: Analytics ─────────────────────────────────────────────
             with gr.TabItem("📊 Fleet Analytics", id="analytics"):
                 with gr.Column(elem_classes="main-card"):
+                    with gr.Row(elem_classes="action-bar"):
+                        gr.HTML('<div class="action-bar-label">TACTICAL_OVERSEER_V2.0 // FAST_ACTION_BAR</div>')
+                        analytics_reset_btn = gr.Button("🔄 REBOOT UPLINK", variant="secondary", size="sm")
+                        analytics_auto_btn = gr.Button("🤖 START AI PILOT", variant="primary", size="sm")
+                        analytics_submit_btn = gr.Button("✅ AUTHORIZE SUBMIT", variant="primary", size="sm")
+                        analytics_refresh_btn = gr.Button("📊 SYNC ANALYTICS", variant="secondary", size="sm")
+
                     gr.Markdown("## 📈 Performance Observability")
                     with gr.Row():
                         history_table = gr.Dataframe(
@@ -664,6 +673,28 @@ def create_ui():
             on_lockdown,
             inputs=[total_reward, history_state, env_state],
             outputs=ALL_OUT
+        )
+
+        # Analytics Action Bar Wiring
+        analytics_reset_btn.click(
+            on_reset,
+            inputs=[task_type, history_state, env_state],
+            outputs=ALL_OUT + [env_state]
+        )
+        analytics_auto_btn.click(
+            on_auto_triage,
+            inputs=[agent_proto, hint_input, total_reward, history_state, env_state],
+            outputs=ALL_OUT
+        )
+        analytics_submit_btn.click(
+            on_submit,
+            inputs=[total_reward, history_state, env_state],
+            outputs=ALL_OUT
+        )
+        analytics_refresh_btn.click(
+            build_leaderboard,
+            inputs=[history_state],
+            outputs=[leaderboard_table, leaderboard_chart, defcon_stats, lb_msg]
         )
         translate_btn.click(
             lambda: {sys_msg: "📡 **UPLINK:** Biometric decryption complete — NO MALICIOUS INTENT DETECTED."},
